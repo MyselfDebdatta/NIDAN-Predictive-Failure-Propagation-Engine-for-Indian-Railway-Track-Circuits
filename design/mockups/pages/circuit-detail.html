@@ -1,0 +1,454 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ADRA/TC/12T · circuit detail · NIDAN</title>
+<meta name="description" content="NIDAN circuit detail mockup — physics twin, SHAP, precedents, RUL band and Rolling Block-aware action.">
+<link rel="stylesheet" href="../assets/tokens.css">
+<link rel="stylesheet" href="../assets/app.css">
+</head>
+<body data-page="asset" data-scope="SER / ADRA / ADRA YARD / 12T" data-role="SSE / Sig · Adra">
+<div class="app">
+  <main class="main">
+    <div class="main__inner">
+
+      <header class="page-head">
+        <div>
+          <div class="page-head__eyebrow">
+            <span class="label label--teal">Track circuit</span>
+            <span class="level level--watch"><span class="glyph glyph--watch" aria-hidden="true"></span>Watch</span>
+            <span class="chip chip--amber chip--mono">data trust 0.62</span>
+            <span class="chip chip--mono">cluster c-9917</span>
+          </div>
+          <h1 class="page-head__title mono" style="font-size:32px;letter-spacing:-0.045em">ADRA/TC/12T</h1>
+          <p class="page-head__sub">Adra Yard · Down Goods · 420 m DC track circuit · relay TR12 · installed 01 Mar 2009 · codal life 15 y</p>
+        </div>
+        <div class="page-head__actions">
+          <button class="btn btn--ghost" type="button">Acknowledge</button>
+          <button class="btn" type="button">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 3v9m0 0 3.2-3.2M10 12 6.8 8.8M4 15.5h12"/></svg>
+            Add to block
+          </button>
+          <button class="btn btn--primary" type="button">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 4h9l3 3v9H4V4Z"/><path d="M7 4v4h5M7 12h6"/></svg>
+            Create SMMS draft
+          </button>
+        </div>
+      </header>
+
+      <!-- Diagnostic spine: the four Ayurvedic stages, mapped to system layers -->
+      <section aria-label="Diagnostic stage" style="margin-bottom:20px">
+        <div class="u-row" style="margin-bottom:7px">
+          <span class="label">Diagnostic spine</span>
+          <span class="xs u-dim">Pūrvarūpa → Nidāna → Samprāpti → Upaśaya</span>
+          <span class="u-spacer"></span>
+          <span class="xs u-dim">stage 2 of 4 · cause established, response pending</span>
+        </div>
+        <div class="stages">
+          <div class="stage stage--done">
+            <div class="stage__top"><span class="stage__name">पूर्वरूप</span><span class="chip chip--teal">Watch</span></div>
+            <div class="stage__lat">Purvarupa · early signs</div>
+            <div class="stage__state">Drift detected 11 Jul · baseline circuit</div>
+          </div>
+          <div class="stage stage--now">
+            <div class="stage__top"><span class="stage__name">निदान</span><span class="chip chip--amber">F1</span></div>
+            <div class="stage__lat">Nidana · cause</div>
+            <div class="stage__state">Drainage / low ballast resistance</div>
+          </div>
+          <div class="stage">
+            <div class="stage__top"><span class="stage__name">सम्प्राप्ति</span><span class="chip chip--mono">21 d</span></div>
+            <div class="stage__lat">Sampraspti · course</div>
+            <div class="stage__state">RUL p10 9 d · p90 38 d · cluster c-9917</div>
+          </div>
+          <div class="stage">
+            <div class="stage__top"><span class="stage__name">उपशय</span><span class="chip chip--mono">RB-28</span></div>
+            <div class="stage__lat">Upasaya · response</div>
+            <div class="stage__state">Ballast clearing · 16 Jul · 90 min</div>
+          </div>
+        </div>
+      </section>
+
+      <div class="grid12">
+
+        <!-- ============ LEFT ============ -->
+        <div class="c8 stack">
+
+          <!-- RUL -->
+          <article class="panel">
+            <div class="panel__head">
+              <h2>Remaining useful life</h2>
+              <span class="chip chip--mono">conformal 90%</span>
+              <div class="panel__tools">
+                <span class="label">Samprāpti</span>
+                <span class="xs u-dim">as of 14 Jul 05:10 IST</span>
+              </div>
+            </div>
+            <div class="panel__body">
+              <svg class="band" viewBox="0 0 560 118" role="img" aria-label="Remaining useful life band: 10th percentile 9 days, median 21 days, 90th percentile 38 days. Early warning threshold at 30 days. Rolling Block RB-28 falls on day 2.">
+                    <!-- grid -->
+                    <g>
+                      <line class="band__grid" x1="34" y1="30" x2="34" y2="86"/>
+                      <line class="band__grid" x1="113.8" y1="30" x2="113.8" y2="86"/>
+                      <line class="band__grid" x1="193.6" y1="30" x2="193.6" y2="86"/>
+                      <line class="band__grid" x1="273.4" y1="30" x2="273.4" y2="86"/>
+                      <line class="band__grid" x1="353.2" y1="30" x2="353.2" y2="86"/>
+                      <line class="band__grid" x1="433" y1="30" x2="433" y2="86"/>
+                      <line class="band__grid" x1="512.8" y1="30" x2="512.8" y2="86"/>
+                    </g>
+                    <!-- rolling block window -->
+                    <rect class="band__block" x="50.8" y="30" width="11.4" height="56"/>
+                    <text class="band__tick" x="66" y="40" fill="#8FB2FF">RB-28</text>
+                    <!-- threshold -->
+                    <line class="band__thr" x1="376" y1="30" x2="376" y2="86"/>
+                    <text class="band__tick" x="380" y="38" fill="#FF6B70">early warning 30 d</text>
+                    <!-- p10-p90 band -->
+                    <rect class="band__range" x="136.6" y="56" width="330.4" height="18" rx="3"/>
+                    <!-- median -->
+                    <line class="band__median" x1="273.4" y1="50" x2="273.4" y2="80"/>
+                    <circle cx="273.4" cy="65" r="3" fill="#6FF0E2"/>
+                    <!-- today -->
+                    <line x1="34" y1="26" x2="34" y2="86" stroke="#38E0CE" stroke-width="1.4"/>
+                    <text class="band__tick" x="34" y="20" fill="#38E0CE">today</text>
+                    <!-- labels -->
+                    <text class="band__tick" x="136.6" y="94" fill="#A8BECD">p10 9 d</text>
+                    <text class="band__tick" x="273.4" y="94" text-anchor="middle" fill="#EFF6FB">median 21 d</text>
+                    <text class="band__tick" x="467" y="94" text-anchor="end" fill="#A8BECD">p90 38 d</text>
+                    <!-- axis -->
+                    <line class="band__axis" x1="34" y1="86" x2="548" y2="86"/>
+                    <g>
+                      <text class="band__tick" x="34" y="110" text-anchor="middle">0</text>
+                      <text class="band__tick" x="113.8" y="110" text-anchor="middle">7</text>
+                      <text class="band__tick" x="193.6" y="110" text-anchor="middle">14</text>
+                      <text class="band__tick" x="273.4" y="110" text-anchor="middle">21</text>
+                      <text class="band__tick" x="353.2" y="110" text-anchor="middle">28</text>
+                      <text class="band__tick" x="433" y="110" text-anchor="middle">35</text>
+                      <text class="band__tick" x="512.8" y="110" text-anchor="middle">42</text>
+                    </g>
+                  </svg>
+              <div class="u-row u-row--between mt2" style="align-items:flex-start">
+                <p class="xs u-dim" style="max-width:72ch">Median survival under current drainage; the band is the 10th–90th percentile. The already-published block RB-28 falls on day 2, well inside the p10.</p>
+                <span class="chip chip--teal chip--mono">RB-28 in 2 d</span>
+              </div>
+
+              <div class="divider"></div>
+
+              <div class="grid12" style="gap:20px">
+                <div class="c7">
+                  <div class="label" style="margin-bottom:9px">Risk curve</div>
+                  <div class="grid12" style="gap:12px">
+                    <div class="c4">
+                      <div class="u-row u-row--between xs"><span class="u-mut">24 h</span><span class="mono">4%</span></div>
+                      <div class="meter mt2" style="height:5px"><div class="meter__fill" style="width:4%"></div></div>
+                    </div>
+                    <div class="c4">
+                      <div class="u-row u-row--between xs"><span class="u-mut">72 h</span><span class="mono u-amber">11%</span></div>
+                      <div class="meter mt2" style="height:5px"><div class="meter__fill meter__fill--amber" style="width:11%"></div></div>
+                    </div>
+                    <div class="c4">
+                      <div class="u-row u-row--between xs"><span class="u-mut">7 d</span><span class="mono u-amber">24%</span></div>
+                      <div class="meter mt2" style="height:5px"><div class="meter__fill meter__fill--amber" style="width:24%"></div></div>
+                    </div>
+                  </div>
+                  <div class="xs u-dim mt3">Confidence decays with horizon. The 7-day number is the one that crosses the Watch threshold; it must stay above 20% for three evaluations.</div>
+                </div>
+                <div class="c5">
+                  <div class="label" style="margin-bottom:9px">Conformal interval · 90%</div>
+                  <div class="rul-summary">
+                    <div><span class="label">p10</span><b>9<small>d</small></b></div>
+                    <div><span class="label">median</span><b>21<small>d</small></b></div>
+                    <div><span class="label">p90</span><b>38<small>d</small></b></div>
+                  </div>
+                  <div class="xs u-dim mt2">3,180 held-out outcomes · empirical coverage 0.897</div>
+                  <div class="xs u-dim mt2">Fixing at RB-28 shortens the interval toward the upper bound, not the lower.</div>
+                </div>
+              </div>
+            </div>
+            <div class="panel__foot">
+              <span class="glyph glyph--watch" aria-hidden="true"></span>
+              <span>Watch threshold: 7-day risk &gt; 20% <b>or</b> p10 &lt; 30 d, with persistence over 3 evaluations.</span>
+              <span class="u-spacer"></span>
+              <span class="mono" style="font-size:10px">observed 6 / 6 evals</span>
+            </div>
+          </article>
+
+          <!-- Explanation card -->
+          <article class="panel">
+            <div class="panel__head">
+              <h2>Explanation</h2>
+              <span class="label">Nidāna</span>
+              <div class="panel__tools">
+                <span class="xs u-dim">click a lens</span>
+              </div>
+            </div>
+
+            <div class="tabs" data-tabs="explain" role="tablist" aria-label="Explanation lenses">
+              <button class="tab is-on" data-tab="physics" role="tab" aria-selected="true" type="button">
+                <span>भौतिकी</span><b>Physics</b>
+              </button>
+              <button class="tab" data-tab="model" role="tab" aria-selected="false" type="button">
+                <span>प्रतिरूप</span><b>Model</b>
+              </button>
+              <button class="tab" data-tab="precedents" role="tab" aria-selected="false" type="button">
+                <span>पूर्ववृत्त</span><b>Precedents</b>
+              </button>
+            </div>
+
+            <!-- Physics -->
+            <div data-tabpanel="physics" data-group="explain" class="is-on">
+              <div class="panel__body">
+                <p class="explain__lead">Rail-to-rail leakage is now doing the work the train should do. Effective ballast conductance rose <b>31% in 12 days</b> while the relay margin fell to <b>73% of its dry-weather baseline</b> — faster than rainfall alone explains.</p>
+
+                <div class="explain__grid mt4">
+                  <div>
+                    <div class="label" style="margin-bottom:8px">Twin state · 0.3.1</div>
+                    <table class="table table--dense" style="border:1px solid var(--border);border-radius:6px">
+                      <thead>
+                        <tr><th>Parameter</th><th class="u-right">Now</th><th class="u-right">Reference</th><th class="u-right">Trend 12 d</th></tr>
+                      </thead>
+                      <tbody>
+                        <tr><td class="mono" style="font-size:11px">g_eff</td><td class="u-right mono">2.74 S/km</td><td class="u-right mono u-dim">2.09</td><td class="u-right mono u-amber">+31%</td></tr>
+                        <tr><td class="mono" style="font-size:11px">R_loop</td><td class="u-right mono">0.098 Ω/km</td><td class="u-right mono u-dim">0.097</td><td class="u-right mono u-dim">+0.6%</td></tr>
+                        <tr><td class="mono" style="font-size:11px">R_relay</td><td class="u-right mono">9.02 Ω</td><td class="u-right mono u-dim">9.00</td><td class="u-right mono u-dim">+0.2%</td></tr>
+                        <tr><td class="mono" style="font-size:11px">margin</td><td class="u-right mono u-amber">0.73</td><td class="u-right mono u-dim">1.00</td><td class="u-right mono u-amber">−0.11</td></tr>
+                      </tbody>
+                    </table>
+                    <div class="mono xs u-dim mt2">I_relay = f(V_feed, R_loop, g_eff, R_relay) · solved per 30 s window</div>
+                  </div>
+                  <div>
+                    <div class="label" style="margin-bottom:8px">What changed in the environment</div>
+                    <div class="factlist">
+                      <div class="factlist__row"><span class="factlist__k">Rain 72 h</span><span class="factlist__v"><b class="mono">61 mm</b> · 97th percentile for July</span></div>
+                      <div class="factlist__row"><span class="factlist__k">Drain invert</span><span class="factlist__v">0.4 m below ballast shoulder</span></div>
+                      <div class="factlist__row"><span class="factlist__k">Insulation</span><span class="factlist__v">1.2 MΩ · joint healthy (F2 unlikely)</span></div>
+                      <div class="factlist__row"><span class="factlist__k">Neighbours</span><span class="factlist__v">14T and 16T share the same catchment</span></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="notice notice--teal mt4">
+                  <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2.5 4 5v5c0 4 2.6 6.6 6 7.5 3.4-.9 6-3.5 6-7.5V5l-6-2.5Z"/><path d="m7.4 10 1.9 2 3.3-3.6"/></svg>
+                  <span><b>Falsifier check.</b> If insulation falls below 0.5 MΩ the ranking moves to F2 (insulated joint). If supply ripple exceeds 3% it moves to F6. Neither condition is present.</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Model -->
+            <div data-tabpanel="model" data-group="explain">
+              <div class="panel__body">
+                <p class="explain__lead">The gradient-boosted model and the survival model agree on direction. Contributions below are SHAP values in log-odds, computed on the 7-day window.</p>
+                <div class="explain__grid mt4">
+                  <div class="shap">
+                    <div class="shap__row"><span class="shap__name">relay_i_slope_7d</span><span class="shap__bar"><i class="pos" style="width:41%"></i></span><span class="shap__val u-red">−0.41</span></div>
+                    <div class="shap__row"><span class="shap__name">rain_72h</span><span class="shap__bar"><i class="pos" style="width:12%"></i></span><span class="shap__val u-red">−0.12</span></div>
+                    <div class="shap__row"><span class="shap__name">relay_pick_ms</span><span class="shap__bar"><i class="pos" style="width:8%"></i></span><span class="shap__val u-amber">+0.08</span></div>
+                    <div class="shap__row"><span class="shap__name">ambient_rh_7d</span><span class="shap__bar"><i class="pos" style="width:5%"></i></span><span class="shap__val u-amber">+0.05</span></div>
+                    <div class="shap__row"><span class="shap__name">feed_ripple_p95</span><span class="shap__bar"><i class="pos" style="width:2%"></i></span><span class="shap__val u-dim">+0.02</span></div>
+                  </div>
+                  <div>
+                    <div class="factlist">
+                      <div class="factlist__row"><span class="factlist__k">Model</span><span class="factlist__v">GNB classifier 0.2.0 · calibrated</span></div>
+                      <div class="factlist__row"><span class="factlist__k">Calibration</span><span class="factlist__v">ECE 0.041 · 1,204 holds</span></div>
+                      <div class="factlist__row"><span class="factlist__k">Conformal</span><span class="factlist__v">set {F1, F4} · coverage 0.90</span></div>
+                      <div class="factlist__row"><span class="factlist__k">Agreement</span><span class="factlist__v">twin / GNN / survival: 0.82</span></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="notice mt4">
+                  <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M10 3 2 16.5h16L10 3Z"/><path d="M10 8v4M10 14.5h.01"/></svg>
+                  <span><b>Not a probability you should multiply by cost.</b> Risk is a calibrated 7-day failure probability for this circuit class; consequence is modelled separately.</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Precedents -->
+            <div data-tabpanel="precedents" data-group="explain">
+              <div class="panel__body">
+                <p class="explain__lead">Three nearest confirmed cases from SMMS, matched on circuit type, failure signature and season. Similarity is cosine distance over the twin feature vector.</p>
+                <div class="mt4">
+                  <div class="precedent">
+                    <span class="precedent__id">SMMS-118</span>
+                    <div class="precedent__body"><b>Ballast fouling after monsoon, Down Goods</b><span>Adra · Jul 2024 · F1 · cleared by drain rodding + ballast cleaning</span></div>
+                    <span class="precedent__sim">0.91</span>
+                  </div>
+                  <div class="precedent">
+                    <span class="precedent__id">SMMS-204</span>
+                    <div class="precedent__body"><b>Low ballast resistance, shared catchment</b><span>Bankura · Aug 2023 · F1 · 3 circuits, single drain fix</span></div>
+                    <span class="precedent__sim">0.87</span>
+                  </div>
+                  <div class="precedent">
+                    <span class="precedent__id">SMMS-377</span>
+                    <div class="precedent__body"><b>Slow relay drop with wet ballast</b><span>Adra · Sep 2022 · F1/F5 · relay replaced, ballast cleaned</span></div>
+                    <span class="precedent__sim">0.79</span>
+                  </div>
+                </div>
+                <div class="u-row mt4" style="gap:8px">
+                  <button class="btn btn--sm" type="button">Open in SMMS</button>
+                  <button class="btn btn--sm btn--ghost" type="button">Mark as not similar</button>
+                  <span class="u-spacer"></span>
+                  <span class="xs u-dim">feedback trains the precedent index, not the risk model</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel__foot">
+              <span class="mono" style="font-size:10px">twin 0.3.1 · gnn 0.2.0 · survival 0.2.4</span>
+              <span class="u-spacer"></span>
+              <a class="sm u-teal" href="model-health.html">Model health →</a>
+            </div>
+          </article>
+
+          <!-- Signals -->
+          <article class="panel">
+            <div class="panel__head">
+              <h2>Signals</h2>
+              <span class="label">30 days</span>
+              <div class="panel__tools">
+                <span class="chip chip--mono">4 sensors</span>
+                <button class="btn btn--ghost btn--sm" type="button">Compare</button>
+              </div>
+            </div>
+            <div class="panel__body">
+              <div class="grid12" style="gap:16px">
+                <div class="c3">
+                  <div class="u-row u-row--between"><span class="label">Relay current</span><span class="chip chip--amber">−6.4%</span></div>
+                  <div class="u-row" style="align-items:baseline;gap:6px;margin-top:6px"><span class="num" style="font-size:20px">1.82</span><span class="xs u-dim">A</span></div>
+                  <svg style="width:100%;height:46px;margin-top:6px" data-points="2.05,2.02,2.00,1.98,1.99,1.94,1.92,1.90,1.88,1.86,1.83,1.82" data-kind="amber" aria-hidden="true"></svg>
+                  <div class="xs u-dim">baseline 1.95 A · dry band 1.9–2.1</div>
+                </div>
+                <div class="c3">
+                  <div class="u-row u-row--between"><span class="label">Ballast g_eff</span><span class="chip chip--amber">+31%</span></div>
+                  <div class="u-row" style="align-items:baseline;gap:6px;margin-top:6px"><span class="num" style="font-size:20px">2.74</span><span class="xs u-dim">S/km</span></div>
+                  <svg style="width:100%;height:46px;margin-top:6px" data-points="2.09,2.12,2.18,2.21,2.3,2.38,2.45,2.51,2.58,2.64,2.7,2.74" data-kind="amber" aria-hidden="true"></svg>
+                  <div class="xs u-dim">reference 2.09 S/km · rising since 2 Jul</div>
+                </div>
+                <div class="c3">
+                  <div class="u-row u-row--between"><span class="label">Pick-up time</span><span class="chip chip--amber">+18 ms</span></div>
+                  <div class="u-row" style="align-items:baseline;gap:6px;margin-top:6px"><span class="num" style="font-size:20px">214</span><span class="xs u-dim">ms</span></div>
+                  <svg style="width:100%;height:46px;margin-top:6px" data-points="196,198,197,201,199,204,203,208,206,210,212,214" data-kind="muted" aria-hidden="true"></svg>
+                  <div class="xs u-dim">codal limit 260 ms · relay TR12</div>
+                </div>
+                <div class="c3">
+                  <div class="u-row u-row--between"><span class="label">Feed voltage</span><span class="chip chip--teal">stable</span></div>
+                  <div class="u-row" style="align-items:baseline;gap:6px;margin-top:6px"><span class="num" style="font-size:20px">109.6</span><span class="xs u-dim">V DC</span></div>
+                  <svg style="width:100%;height:46px;margin-top:6px" data-points="110.1,109.9,110.0,109.8,109.9,109.7,109.8,109.6,109.7,109.5,109.6,109.6" data-kind="teal" aria-hidden="true"></svg>
+                  <div class="xs u-dim">IPS/1 · ripple 0.9% · nominal 110 V</div>
+                </div>
+              </div>
+            </div>
+            <div class="panel__foot">
+              <span class="u-row"><span class="glyph glyph--nominal"></span>Dual detection: axle counter agrees on 100% of 4,812 occupancies</span>
+              <span class="u-spacer"></span>
+              <span class="mono" style="font-size:10px">sampled 30 s · 12 s ago</span>
+            </div>
+          </article>
+        </div>
+
+        <!-- ============ RIGHT ============ -->
+        <div class="c4 stack">
+
+          <article class="panel">
+            <div class="panel__head"><h2>Likely failure mode</h2><div class="panel__tools"><span class="chip chip--mono">set {F1, F4}</span></div></div>
+            <div class="panel__body panel__body--tight">
+              <div class="stack stack--tight">
+                <div>
+                  <div class="u-row u-row--between" style="margin-bottom:5px"><span class="sm"><span class="chip chip--mono" style="margin-right:5px">F1</span>Low ballast resistance</span><span class="mono u-amber" style="font-size:12px">0.71</span></div>
+                  <div class="meter"><div class="meter__fill meter__fill--amber" style="width:71%"></div></div>
+                </div>
+                <div>
+                  <div class="u-row u-row--between" style="margin-bottom:5px"><span class="sm"><span class="chip chip--mono" style="margin-right:5px">F4</span>Metallic bridging</span><span class="mono u-dim" style="font-size:12px">0.12</span></div>
+                  <div class="meter"><div class="meter__fill" style="width:12%;background:var(--ink-400)"></div></div>
+                </div>
+                <div>
+                  <div class="u-row u-row--between" style="margin-bottom:5px"><span class="sm"><span class="chip chip--mono" style="margin-right:5px">F5</span>Relay ageing</span><span class="mono u-dim" style="font-size:12px">0.06</span></div>
+                  <div class="meter"><div class="meter__fill" style="width:6%;background:var(--ink-400)"></div></div>
+                </div>
+                <div>
+                  <div class="u-row u-row--between" style="margin-bottom:5px"><span class="sm"><span class="chip chip--mono" style="margin-right:5px">F9</span>Shunting failure</span><span class="mono u-dim" style="font-size:12px">0.04</span></div>
+                  <div class="meter"><div class="meter__fill" style="width:4%;background:var(--ink-400)"></div></div>
+                </div>
+              </div>
+              <div class="xs u-dim mt3">Conformal set {F1, F4} at 90% coverage. Modes below 0.05 omitted.</div>
+            </div>
+          </article>
+
+          <article class="panel">
+            <div class="panel__head"><h2>Cluster c-9917</h2><div class="panel__tools"><span class="chip chip--amber">shared drain</span></div></div>
+            <div class="panel__body panel__body--tight">
+              <div class="stack stack--tight">
+                <div class="member" style="background:var(--ink-750);border-color:var(--amber-line)">
+                  <span class="glyph glyph--watch"></span>
+                  <div><div class="mono" style="font-size:11px">ADRA/TC/12T</div><div class="member__loc">this circuit · Watch</div></div>
+                  <span class="member__risk u-teal">24%</span>
+                </div>
+                <div class="member">
+                  <span class="glyph glyph--warning"></span>
+                  <div><div class="mono" style="font-size:11px">ADRA/TC/14T</div><div class="member__loc">Down Goods · Warning</div></div>
+                  <span class="member__risk u-amber">38%</span>
+                </div>
+                <div class="member">
+                  <span class="glyph glyph--watch"></span>
+                  <div><div class="mono" style="font-size:11px">ADRA/TC/16T</div><div class="member__loc">Up Goods · Watch</div></div>
+                  <span class="member__risk u-teal">22%</span>
+                </div>
+              </div>
+              <div class="meta-row mt3"><dt>Shared edge</dt><dd>weather_cell → drain</dd></div>
+              <div class="meta-row"><dt>Fix once</dt><dd>clears 3 alerts · 90 min</dd></div>
+            </div>
+          </article>
+
+          <article class="panel">
+            <div class="panel__head"><h2>Recommended action</h2><div class="panel__tools"><span class="label">Upaśaya</span></div></div>
+            <div class="panel__body">
+              <div class="h3">Ballast clearing + drain rodding</div>
+              <div class="sm u-mut" style="margin-top:3px">Restores the leakage path before the next heavy spell.</div>
+
+              <div class="meta-row mt3"><dt>Window</dt><dd><b>RB-28</b> · 16 Jul 02:10–03:40</dd></div>
+              <div class="meta-row"><dt>Duration</dt><dd>90 min · 2 technicians + SSE</dd></div>
+              <div class="meta-row"><dt>Prerequisites</dt><dd>Block confirmed · point zone 14 clear</dd></div>
+              <div class="meta-row"><dt>If deferred</dt><dd class="u-amber">Risk rises to 41% before RB-30</dd></div>
+
+              <div class="notice notice--teal mt3">
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="7"/><path d="m6.8 10.2 2.2 2.2 4.2-4.6"/></svg>
+                <span>Fits the published block with <b>no extension</b>. This intervention will be logged as a causal trial.</span>
+              </div>
+
+              <div class="u-row mt4" style="gap:8px">
+                <button class="btn btn--primary" type="button">Create SMMS draft</button>
+                <button class="btn btn--ghost" type="button">Assign</button>
+              </div>
+            </div>
+          </article>
+
+          <article class="panel">
+            <div class="panel__head"><h2>Asset record</h2><div class="panel__tools"><span class="chip chip--amber chip--mono">trust 0.62</span></div></div>
+            <div class="panel__body panel__body--tight">
+              <div class="meta-row"><dt>Installed</dt><dd><b>01 Mar 2009</b> · 17.4 y</dd></div>
+              <div class="meta-row"><dt>Codal life</dt><dd><b>15 y</b> <span class="u-amber">· exceeded</span></dd></div>
+              <div class="meta-row"><dt>Relay</dt><dd>TR12 · <b>XYZ/RLY/TR12</b></dd></div>
+              <div class="meta-row"><dt>Supply</dt><dd>IPS/1 · <b>XYZ/IPS/1</b></dd></div>
+              <div class="meta-row"><dt>Cable</dt><dd>Route N2 · <b>XYZ/CBL/N2</b></dd></div>
+              <div class="meta-row"><dt>Last SMMS</dt><dd>09 Jul · joint inspection</dd></div>
+              <div class="notice mt3" style="border-color:var(--amber-line)">
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M10 3 2 16.5h16L10 3Z"/><path d="M10 8v4M10 14.5h.01"/></svg>
+                <span><b>3 record issues.</b> Age vs. signature mismatch; install date conflicts with SMMS; sensor coverage partial since 2024.</span>
+              </div>
+              <button class="btn btn--sm mt3" type="button">Reconcile record</button>
+            </div>
+          </article>
+
+          <article class="panel">
+            <div class="panel__body panel__body--tight">
+              <div class="u-row u-row--between xs"><span class="u-dim">Provenance</span><span class="mono">14 Jul 05:10 IST</span></div>
+              <div class="xs u-dim mt2" style="line-height:1.7">Scores are advisory and non-vital. No command path exists to interlocking, signals, routes or track circuits. Every acknowledgement, deferral and SMMS confirmation is written to an immutable audit log.</div>
+            </div>
+          </article>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+<script src="../assets/app.js"></script>
+</body>
+</html>

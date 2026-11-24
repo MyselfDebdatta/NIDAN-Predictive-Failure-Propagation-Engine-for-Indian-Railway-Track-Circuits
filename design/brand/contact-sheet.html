@@ -1,0 +1,84 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><style>
+  body{margin:0;background:#E7EDF3;padding:30px;font:12px/1.4 "Segoe UI",system-ui,sans-serif;color:#0B2545}
+  h1{font-size:13px;letter-spacing:.16em;text-transform:uppercase;color:#5B7288;margin:0 0 4px;font-weight:600}
+  h2{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#8496A8;margin:0 0 14px;font-weight:600}
+  .block{background:#fff;border:1px solid #C9D4E0;padding:24px 26px;margin-bottom:16px}
+  .block.dark{background:#0A121A;border-color:#0A121A;color:#E9F1F7}
+  .block.dark h1{color:#7E97A8}.block.dark h2{color:#5F7A8C}
+  .row{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap}
+  figure{margin:0;text-align:center}
+  figcaption{font:9px/1 "JetBrains Mono",monospace;color:#8496A8;margin-top:8px;letter-spacing:.06em}
+  .block.dark figcaption{color:#5F7A8C}
+  img{display:block;image-rendering:auto}
+  .px{image-rendering:pixelated}
+  .zoom{display:flex;gap:24px;align-items:flex-end;margin-top:20px;padding-top:18px;border-top:1px solid #E2EAF1}
+  .block.dark .zoom{border-top-color:#1B2B39}
+  .zoom figure{position:relative}
+  .zoom .frame{outline:1px dashed #C3D2DE;padding:0}
+  .block.dark .zoom .frame{outline-color:#2A4152}
+  .note{font-size:10.5px;color:#6B7E90;margin-top:10px;line-height:1.55}
+</style></head><body>
+
+<div class="block">
+  <h1>Primary lockup · light ground</h1>
+  <h2>Rasterised from vector at production width</h2>
+  <div class="row">
+    <figure><img src="png/nidan-logo-primary.png" width="520"><figcaption>520 px</figcaption></figure>
+    <figure><img src="png/nidan-logo-primary.png" width="260"><figcaption>260 px</figcaption></figure>
+    <figure><img src="png/nidan-logo-primary.png" width="130"><figcaption>130 px · minimum lockup</figcaption></figure>
+  </div>
+</div>
+
+<div class="block dark">
+  <h1>Primary lockup · dark ground</h1>
+  <h2>Paper + bright teal on ink</h2>
+  <div class="row">
+    <figure><img src="png/nidan-logo-primary-dark.png" width="420"><figcaption>420 px</figcaption></figure>
+    <figure><img src="png/nidan-logo-horizontal-dark.png" width="260"><figcaption>horizontal · 260 px</figcaption></figure>
+    <figure><img src="png/nidan-logo-vertical-dark.png" width="150"><figcaption>crest · 150 px</figcaption></figure>
+  </div>
+</div>
+
+<div class="block">
+  <h1>Mark at interface sizes</h1>
+  <h2>Actual pixels — no scaling</h2>
+  <div class="row">
+    <figure><img src="png/nidan-mark.png" width="96"><figcaption>96</figcaption></figure>
+    <figure><img src="png/nidan-mark.png" width="48"><figcaption>48</figcaption></figure>
+    <figure><img src="png/nidan-mark.png" width="32"><figcaption>32</figcaption></figure>
+    <figure><img src="png/nidan-mark.png" width="24"><figcaption>24</figcaption></figure>
+    <figure><img src="png/nidan-mark.png" width="16"><figcaption>16</figcaption></figure>
+    <figure><img src="png/nidan-mark-mono.png" width="32"><figcaption>mono 32</figcaption></figure>
+  </div>
+  <div class="note">At 16 px the teal diagonal still separates from the navy stems. Below 16 px use the favicon, which is drawn with a heavier N.</div>
+</div>
+
+<div class="block dark">
+  <h1>Icon system</h1>
+  <h2>App icon and favicon at real sizes</h2>
+  <div class="row">
+    <figure><img src="png/nidan-app-icon-192.png" width="192"><figcaption>app 192</figcaption></figure>
+    <figure><img src="png/nidan-app-icon-64.png" width="64"><figcaption>app 64</figcaption></figure>
+    <figure><img src="png/nidan-favicon-64.png" width="64"><figcaption>fav 64</figcaption></figure>
+    <figure><img src="png/nidan-favicon-32.png" width="32"><figcaption>fav 32</figcaption></figure>
+    <figure><img src="png/nidan-favicon-16.png" width="16"><figcaption>fav 16</figcaption></figure>
+  </div>
+  <div class="zoom">
+    <figure><div class="frame"><img class="px" src="png/nidan-favicon-16.png" width="128" height="128"></div><figcaption>favicon 16 · shown at 8×</figcaption></figure>
+    <figure><div class="frame"><img class="px" src="png/nidan-favicon-32.png" width="128" height="128"></div><figcaption>favicon 32 · shown at 4×</figcaption></figure>
+    <figure><div class="frame"><img class="px" src="png/nidan-app-icon-64.png" width="128" height="128"></div><figcaption>app 64 · shown at 2×</figcaption></figure>
+  </div>
+</div>
+
+<div class="block">
+  <h1>Mono reproduction</h1>
+  <h2>Single colour, tint, and the one-colour mark</h2>
+  <div class="row">
+    <figure><img src="png/nidan-logo-mono.png" width="300"><figcaption>mono</figcaption></figure>
+    <figure><img src="png/nidan-logo-mono-tint.png" width="300"><figcaption>mono · tint</figcaption></figure>
+    <figure><img src="png/nidan-mark-mono.png" width="70"><figcaption>mark</figcaption></figure>
+  </div>
+</div>
+
+</body></html>

@@ -1,0 +1,244 @@
+/* ==========================================================================
+   NIDAN · Design tokens
+   v1.0 · dark control-room base, field high-contrast override
+   Single source of truth for colour, type, space, radius, elevation, motion.
+   ========================================================================== */
+
+@import url("./fonts/google.css");
+
+:root {
+  color-scheme: dark;
+
+  /* ---- Surface ramp: deep ink → raised panel ---------------------------- */
+  --ink-1000: #04080C;
+  --ink-950:  #060C12;
+  --ink-900:  #080F16;
+  --ink-850:  #0B131C;
+  --ink-800:  #0E1822;
+  --ink-750:  #12202C;
+  --ink-700:  #172836;
+  --ink-650:  #1C3040;
+  --ink-600:  #22394A;
+  --ink-500:  #2C4557;
+  --ink-400:  #3B5768;
+  --ink-300:  #54758A;
+  --ink-200:  #7D9AAD;
+  --ink-100:  #AFC4D3;
+  --ink-050:  #E3EDF4;
+
+  /* ---- Text ------------------------------------------------------------- */
+  --text-hi:  #EFF6FB;
+  --text-mid: #A8BECD;
+  --text-lo:  #7A93A5;
+  --text-inv: #06121A;
+
+  /* ---- Accent: signal teal --------------------------------------------- */
+  --teal-300: #6FF0E2;
+  --teal-400: #38E0CE;
+  --teal-500: #17C6B6;
+  --teal-600: #0DA294;
+  --teal-700: #0A7D73;
+  --teal-800: #075A54;
+  --teal-900: #053B37;
+  --teal-wash: rgba(23, 198, 182, 0.12);
+  --teal-line: rgba(23, 198, 182, 0.34);
+
+  /* ---- Caution: amber --------------------------------------------------- */
+  --amber-300: #FFD68A;
+  --amber-400: #F9BE5C;
+  --amber-500: #EDA22E;
+  --amber-600: #C47F16;
+  --amber-900: #3A2708;
+  --amber-wash: rgba(237, 162, 46, 0.13);
+  --amber-line: rgba(237, 162, 46, 0.38);
+
+  /* ---- Critical: red, reserved for Critical state only ------------------ */
+  --red-300: #FFA0A3;
+  --red-400: #FF6B70;
+  --red-500: #E8474D;
+  --red-600: #C22F35;
+  --red-900: #3B1114;
+  --red-wash: rgba(232, 71, 77, 0.13);
+  --red-line: rgba(232, 71, 77, 0.40);
+
+  /* ---- Nominal ---------------------------------------------------------- */
+  --ok-500: #46CBA0;
+  --ok-wash: rgba(70, 203, 160, 0.12);
+
+  /* ---- Semantic mapping ------------------------------------------------- */
+  --bg-app: var(--ink-950);
+  --bg-chrome: var(--ink-900);
+  --bg-panel: var(--ink-800);
+  --bg-raised: var(--ink-750);
+  --bg-inset: var(--ink-1000);
+  --bg-hover: rgba(255, 255, 255, 0.035);
+  --bg-active: rgba(23, 198, 182, 0.09);
+  --border: #1A2C3A;
+  --border-strong: #24404F;
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --focus-ring: #6FF0E2;
+
+  --state-watch: var(--teal-400);
+  --state-warning: var(--amber-400);
+  --state-critical: var(--red-400);
+  --state-nominal: var(--ok-500);
+
+  /* ---- Type ------------------------------------------------------------- */
+  --font-latin: "Inter", "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-deva: "Noto Sans Devanagari", "Nirmala UI", "Mangal", var(--font-latin);
+  --font-mono: "JetBrains Mono", "Cascadia Mono", ui-monospace, "SF Mono", Consolas, monospace;
+
+  --fs-display: 34px;   --lh-display: 38px;
+  --fs-h1: 25px;        --lh-h1: 31px;
+  --fs-h2: 18px;        --lh-h2: 24px;
+  --fs-h3: 14.5px;      --lh-h3: 20px;
+  --fs-body: 13.5px;    --lh-body: 20px;
+  --fs-sm: 12px;        --lh-sm: 17px;
+  --fs-xs: 11px;        --lh-xs: 15px;
+  --fs-micro: 10px;     --lh-micro: 13px;
+  --fs-num: 13px;       --lh-num: 18px;
+
+  --tr-tight: -0.022em;
+  --tr-snug: -0.012em;
+  --tr-wide: 0.085em;
+
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 680;
+
+  /* ---- Space: 8-point, 2px sub-grid for dense controls ------------------ */
+  --s0: 0px;
+  --s-1: 2px;
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 20px;
+  --s6: 24px;
+  --s7: 32px;
+  --s8: 40px;
+  --s9: 48px;
+  --s10: 64px;
+  --s11: 80px;
+
+  /* ---- Radius ----------------------------------------------------------- */
+  --r-xs: 3px;
+  --r-sm: 5px;
+  --r-md: 8px;
+  --r-lg: 12px;
+  --r-xl: 16px;
+  --r-full: 999px;
+
+  /* ---- Elevation: hairline + soft ambient, no glow ---------------------- */
+  --el-0: none;
+  --el-1: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 1px 2px rgba(0, 0, 0, 0.4);
+  --el-2: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 8px 24px -12px rgba(0, 0, 0, 0.7);
+  --el-3: 0 24px 64px -24px rgba(0, 0, 0, 0.85), 0 0 0 1px var(--border-strong);
+
+  /* ---- Motion ---------------------------------------------------------- */
+  --dur-1: 90ms;
+  --dur-2: 160ms;
+  --dur-3: 260ms;
+  --dur-4: 420ms;
+  --ease-out: cubic-bezier(0.16, 0.84, 0.30, 1);
+  --ease-in-out: cubic-bezier(0.55, 0.06, 0.24, 1);
+  --ease-linear: linear;
+
+  /* ---- Layout ---------------------------------------------------------- */
+  --nav-w: 232px;
+  --topbar-h: 58px;
+  --statusbar-h: 30px;
+  --gutter: 20px;
+  --page-pad: 24px;
+  --max-content: 1560px;
+
+  /* ---- Chart series ---------------------------------------------------- */
+  --series-1: var(--teal-400);
+  --series-2: var(--amber-400);
+  --series-3: #7FA6FF;
+  --series-4: #B98BFF;
+  --series-5: #8B9BAA;
+  --series-grid: rgba(255, 255, 255, 0.07);
+  --series-axis: rgba(255, 255, 255, 0.16);
+}
+
+/* ==========================================================================
+   Field theme — sunlight, gloves, low-end LCD, matte anti-glare
+   Not "light mode": a separate physical context. Contrast increased,
+   chroma reduced, shadows removed, radii reduced.
+   ========================================================================== */
+.theme-field {
+  color-scheme: light;
+
+  --bg-app: #F4F3EE;
+  --bg-chrome: #FFFFFF;
+  --bg-panel: #FFFFFF;
+  --bg-raised: #FFFFFF;
+  --bg-inset: #ECEBE4;
+  --bg-hover: rgba(9, 30, 38, 0.05);
+  --bg-active: rgba(6, 100, 94, 0.09);
+
+  --text-hi: #0C161C;
+  --text-mid: #33454F;
+  --text-lo: #4E626C;
+  --text-inv: #FFFFFF;
+
+  --border: #C9CCC6;
+  --border-strong: #9AA39F;
+  --border-subtle: rgba(9, 30, 38, 0.12);
+  --focus-ring: #06443F;
+
+  --teal-300: #0B7A72;
+  --teal-400: #06645E;
+  --teal-500: #044F4A;
+  --teal-600: #033B37;
+  --teal-700: #022C29;
+  --teal-wash: rgba(6, 100, 94, 0.10);
+  --teal-line: rgba(6, 100, 94, 0.45);
+
+  --amber-300: #7A4A00;
+  --amber-400: #7A4A00;
+  --amber-500: #653D00;
+  --amber-600: #4F2F00;
+  --amber-wash: rgba(122, 74, 0, 0.10);
+  --amber-line: rgba(122, 74, 0, 0.42);
+
+  --red-300: #8F1116;
+  --red-400: #8F1116;
+  --red-500: #761013;
+  --red-600: #5C0C0F;
+  --red-wash: rgba(143, 17, 22, 0.09);
+  --red-line: rgba(143, 17, 22, 0.40);
+
+  --ok-500: #1F6B4E;
+  --ok-wash: rgba(31, 107, 78, 0.10);
+
+  --state-watch: #06645E;
+  --state-warning: #7A4A00;
+  --state-critical: #8F1116;
+  --state-nominal: #1F6B4E;
+
+  --el-0: none;
+  --el-1: 0 0 0 1px var(--border);
+  --el-2: 0 2px 0 rgba(12, 22, 28, 0.14);
+  --el-3: 0 8px 24px rgba(12, 22, 28, 0.18);
+
+  --fs-body: 15px; --lh-body: 23px;
+  --fs-h1: 27px;   --lh-h1: 33px;
+  --fs-h2: 21px;   --lh-h2: 27px;
+  --fs-sm: 13.5px; --lh-sm: 19px;
+  --fs-xs: 12.5px; --lh-xs: 17px;
+  --series-1: #06645E;
+  --series-2: #7A4A00;
+  --series-grid: rgba(12, 22, 28, 0.10);
+  --series-axis: rgba(12, 22, 28, 0.26);
+}
+
+/* Field density: every pointer target grows, type tightens less. */
+.theme-field {
+  --touch-min: 56px;
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+}
