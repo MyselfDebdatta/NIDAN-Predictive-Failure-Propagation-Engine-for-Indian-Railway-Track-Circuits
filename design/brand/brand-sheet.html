@@ -1,0 +1,676 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>NIDAN — Brand Identity</title>
+<style>
+@font-face{font-family:"Archivo";src:url("fonts/Archivo.woff2") format("woff2");font-weight:100 900;font-stretch:62% 125%;font-display:swap}
+@font-face{font-family:"Inter";src:url("fonts/Inter.woff2") format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:"Noto Devanagari";src:url("fonts/NotoSansDevanagari.woff2") format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:"JetBrains Mono";src:url("fonts/JetBrainsMono.woff2") format("woff2");font-weight:100 800;font-display:swap}
+
+:root{
+  --ink:#0A121A;--navy:#0B2545;--navy2:#123055;--teal:#0E8F86;--tealD:#0B6B63;
+  --tealB:#2DD4BF;--gold:#C8922F;--paper:#F7FAFC;--line:#DCE5EE;--muted:#5B7288;
+  --text:#12283D;--white:#fff;
+}
+*{box-sizing:border-box}
+html{background:#D9E1EA}
+body{margin:0;font-family:Inter,system-ui,sans-serif;color:var(--text);background:var(--paper);-webkit-font-smoothing:antialiased}
+.sheet{width:1440px;margin:0 auto;background:var(--paper);box-shadow:0 30px 90px rgba(10,18,26,.22)}
+section{padding:88px 96px;position:relative}
+.dark{background:var(--ink);color:#E9F1F7}
+.eyebrow{font-size:10.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.dark .eyebrow{color:#7E97A8}
+h1,h2,h3,h4{font-family:Archivo,Inter,sans-serif;margin:0;font-weight:600;letter-spacing:-.02em}
+h2{font-size:40px;line-height:1.08}
+h3{font-size:21px;line-height:1.25}
+p{line-height:1.68;font-size:15px;color:#3C5165;margin:0}
+.dark p{color:#B7C9D6}
+.rule{height:1px;background:var(--line)}
+.dark .rule{background:#1D2E3D}
+.mono{font-family:"JetBrains Mono",monospace}
+.hi{font-family:"Noto Devanagari",Inter,sans-serif}
+
+/* cover */
+.cover{min-height:900px;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;
+  background:radial-gradient(1100px 620px at 82% 8%,#123055 0%,#0A121A 58%)}
+.cover .ghost{position:absolute;right:-70px;top:70px;width:700px;opacity:.028}
+.cover .top{display:flex;justify-content:space-between;align-items:flex-start;position:relative;z-index:2}
+.cover .meta{font-family:"JetBrains Mono";font-size:10px;letter-spacing:.16em;color:#7E97A8;text-align:right;line-height:1.9}
+.cover .main{position:relative;z-index:2;max-width:860px}
+.cover h1{font-size:98px;line-height:.96;letter-spacing:-.04em;color:#F7FAFC;margin:18px 0 30px}
+.cover h1 em{font-style:normal;color:var(--tealB)}
+.cover .lede{font-size:19px;line-height:1.62;color:#B7C9D6;max-width:640px}
+.cover .bottom{display:flex;justify-content:space-between;align-items:flex-end;
+  font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#7E97A8;position:relative;z-index:2}
+.cover .bottom b{color:#E9F1F7;font-weight:500}
+
+/* section head */
+.sec-head{display:grid;grid-template-columns:90px 1fr 430px;gap:36px;align-items:start;margin-bottom:54px}
+.sec-head .num{font-family:"JetBrains Mono";font-size:11px;color:var(--teal);letter-spacing:.08em;padding-top:9px}
+.sec-head p{font-size:14px;line-height:1.65;padding-top:4px}
+
+/* idea */
+.idea{display:grid;grid-template-columns:400px 1fr;gap:76px;align-items:center}
+.equation{display:flex;align-items:center;gap:10px}
+.eq-item{flex:1;text-align:center}
+.eq-item img{height:148px;width:auto;margin:0 auto 16px}
+.eq-op{font-family:Archivo;font-size:32px;color:#9DB0C2;padding-bottom:34px}
+.eq-label{font-family:"JetBrains Mono";font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.note{margin-top:34px;padding:18px 20px;border-left:2px solid var(--teal);background:#EFF5F8;font-size:13px;line-height:1.6;color:#2E465B}
+.note b{color:var(--navy)}
+
+/* plates */
+.plate{background:#fff;border:1px solid var(--line);display:grid;place-items:center;position:relative}
+.plate.dark{background:var(--ink);border-color:#1B2B39}
+.plate .tag{position:absolute;left:18px;bottom:14px;font-family:"JetBrains Mono";font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#8AA0B2}
+.mark-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:22px}
+.mark-main{height:520px}
+.mark-side{height:520px;background:var(--ink);border-color:#1B2B39}
+.grid-plate{position:relative;overflow:hidden;background:#fff;border:1px solid var(--line);height:520px;display:grid;place-items:center;
+  background-image:linear-gradient(#E9F0F6 1px,transparent 1px),linear-gradient(90deg,#E9F0F6 1px,transparent 1px);
+  background-size:26px 26px}
+.grid-plate .axis{position:absolute;background:#CFE0EA}
+.clearspace{position:relative;padding:54px;border:1px dashed #B9CBD8;display:inline-grid;place-items:center}
+.clearspace .cx{position:absolute;font-family:"JetBrains Mono";font-size:9px;color:var(--teal);background:#fff;padding:0 4px}
+.cs-t{top:-7px;left:50%;transform:translateX(-50%)}.cs-b{bottom:-7px;left:50%;transform:translateX(-50%)}
+.cs-l{left:-7px;top:50%;transform:translateY(-50%)}.cs-r{right:-7px;top:50%;transform:translateY(-50%)}
+
+/* lockups */
+.lock-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.lock-grid .plate{height:300px}
+.lock-grid .plate img{max-width:74%}
+
+/* bilingual */
+.bilingual{display:grid;grid-template-columns:1fr 1fr;gap:70px;align-items:center}
+.deva-big{font-family:"Noto Devanagari";font-size:150px;line-height:1;color:var(--navy);font-weight:500}
+.bi-rules{display:grid;gap:18px;margin-top:28px}
+.bi-rule{display:grid;grid-template-columns:26px 1fr;gap:14px;font-size:13px;line-height:1.6;color:#3C5165}
+.bi-rule span{font-family:"JetBrains Mono";font-size:10px;color:var(--teal);padding-top:3px}
+
+/* colour */
+.swatches{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.sw{background:#fff;border:1px solid var(--line)}
+.sw .chip{height:128px}
+.sw .body{padding:14px 15px 16px}
+.sw .nm{font-size:13px;font-weight:600;color:var(--navy)}
+.sw .hx{font-family:"JetBrains Mono";font-size:10.5px;color:var(--muted);margin-top:4px;letter-spacing:.04em}
+.sw .use{font-size:11px;color:#6B7E90;margin-top:8px;line-height:1.45}
+.ratio{display:flex;height:38px;margin-top:26px;font-family:"JetBrains Mono";font-size:9px;letter-spacing:.08em}
+.ratio div{display:grid;place-items:center;color:#fff}
+.ctab{width:100%;border-collapse:collapse;margin-top:26px;font-size:12px}
+.ctab th{text-align:left;font-weight:600;color:var(--muted);font-size:10px;letter-spacing:.12em;text-transform:uppercase;padding:0 0 10px}
+.ctab td{padding:9px 0;border-top:1px solid var(--line);color:#3C5165}
+.ctab td.mono{color:var(--navy)}
+.dark .ctab th{color:#8FA6B7}
+.dark .ctab td{color:#B7C9D6;border-top-color:#1D2E3D}
+.dark .ctab td.mono{color:#7FE8D8}
+
+/* type */
+.type-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.type-card{background:#fff;border:1px solid var(--line);padding:22px 20px 24px}
+.type-card .aa{font-size:64px;line-height:1;color:var(--navy);margin-bottom:10px}
+.type-card .nm{font-size:14px;font-weight:600;color:var(--navy)}
+.type-card .role{font-family:"JetBrains Mono";font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--teal);margin:5px 0 12px}
+.type-card .sample{font-size:12.5px;line-height:1.55;color:#4A6075}
+.scale{margin-top:34px;border-top:1px solid var(--line)}
+.scale-row{display:grid;grid-template-columns:150px 1fr 110px;gap:24px;align-items:baseline;padding:16px 0;border-bottom:1px solid var(--line)}
+.scale-row .nm{font-family:"JetBrains Mono";font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.scale-row .sp{font-family:Archivo;color:var(--navy);letter-spacing:-.02em}
+.scale-row .spx{font-family:"JetBrains Mono";font-size:10px;color:var(--muted);text-align:right}
+
+/* context */
+.context{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.mock{background:#fff;border:1px solid var(--line);overflow:hidden;position:relative;display:flex;flex-direction:column}
+.mock > .cap{position:absolute;left:16px;bottom:12px;font-family:"JetBrains Mono";font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#8AA0B2;z-index:3}
+
+/* letterhead */
+.lh{background:#fff;padding:44px 48px;min-height:560px;position:relative;flex:1}
+.lh .lh-top{display:flex;justify-content:space-between;align-items:flex-start}
+.lh .addr{font-size:9.5px;line-height:1.7;color:#6B7E90;text-align:right;font-family:"JetBrains Mono";letter-spacing:.02em}
+.lh .lh-rule{height:2px;background:var(--navy);margin:26px 0 0;position:relative}
+.lh .lh-rule:after{content:"";position:absolute;left:0;top:2px;width:120px;height:2px;background:var(--teal)}
+.lh .subject{font-size:11px;letter-spacing:.06em;color:var(--navy);font-weight:600;margin:34px 0 6px}
+.lh .date{font-size:10px;color:#7A8D9E;margin-bottom:18px}
+.lh .body{font-size:11px;line-height:1.75;color:#3E5468;max-width:430px}
+.lh .body p{margin:0 0 10px}
+.lh .sign{margin-top:26px;font-size:10px;color:#5B7288;line-height:1.6}
+.lh .wm{position:absolute;right:34px;bottom:28px;width:130px;opacity:.06}
+
+/* badge */
+.badge-wrap{background:#E9EFF5;padding:30px;display:grid;place-items:center;min-height:560px;flex:1}
+.badge{width:270px;background:#fff;border:1px solid #CBD8E3;box-shadow:0 18px 40px rgba(10,18,26,.14);position:relative}
+.badge .clip{height:16px;background:#D5DFE8;border-bottom:1px solid #C2CFDB}
+.badge .head{background:var(--navy);padding:16px 18px;display:flex;align-items:center;justify-content:space-between}
+.badge .head img{width:92px}
+.badge .head .lvl{font-family:"JetBrains Mono";font-size:8px;letter-spacing:.12em;color:#8FB3C9;text-align:right;line-height:1.5}
+.badge .photo{height:120px;background:linear-gradient(150deg,#DCE6EF,#C9D7E4);display:grid;place-items:center;color:#8FA3B5;font-size:9px;letter-spacing:.12em}
+.badge .id{padding:16px 18px 18px}
+.badge .id .nm{font-family:Archivo;font-size:16px;font-weight:600;color:var(--navy);line-height:1.15}
+.badge .id .role{font-size:10px;color:#5B7288;margin-top:3px}
+.badge .id .div{font-size:9px;color:#7A8D9E;margin-top:8px;line-height:1.5}
+.badge .foot{display:flex;justify-content:space-between;align-items:flex-end;padding:0 18px 16px}
+.badge .bars{display:flex;gap:2px;height:26px;align-items:flex-end}
+.badge .bars i{display:block;width:2px;background:var(--navy)}
+.badge .qr{width:38px;height:38px;background:
+  linear-gradient(90deg,var(--navy) 50%,transparent 50%) 0 0/6px 6px,
+  linear-gradient(transparent 50%,var(--navy) 50%) 0 0/6px 6px;opacity:.8}
+
+/* control room */
+.cr{background:#080F16;padding:0 0 26px;color:#E9F1F7;display:flex;flex-direction:column;flex:1}
+.cr .bar{height:56px;display:flex;align-items:center;gap:26px;padding:0 22px;border-bottom:1px solid #1B2B39;background:#0A141C}
+.cr .bar img{width:96px}
+.cr .nav{display:flex;gap:18px;font-size:11px;color:#8FA6B7}
+.cr .nav b{color:#E9F1F7;font-weight:500}
+.cr .right{margin-left:auto;display:flex;align-items:center;gap:12px}
+.cr .chip{font-family:"JetBrains Mono";font-size:8px;letter-spacing:.1em;color:#7FE8D8;border:1px solid #1E5B57;background:#0B2726;padding:5px 7px}
+.cr .avatar{width:26px;height:26px;border-radius:50%;background:#17384A;color:#9FC4D6;font-size:9px;display:grid;place-items:center}
+.cr .body{padding:22px;flex:1;display:flex;flex-direction:column}
+.cr .crfoot{margin-top:auto;padding-top:12px;border-top:1px solid #1B2B39;display:flex;justify-content:space-between;font-family:"JetBrains Mono";font-size:7.5px;letter-spacing:.1em;color:#6F8899;text-transform:uppercase}
+.cr .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.cr .kpi{background:#0C1822;border:1px solid #1B2B39;padding:12px 14px}
+.cr .kpi .l{font-size:9px;color:#7E97A8;letter-spacing:.08em;text-transform:uppercase}
+.cr .kpi .v{font-family:"JetBrains Mono";font-size:24px;color:#E9F1F7;margin-top:4px}
+.cr .kpi .v small{font-size:9px;color:#7E97A8;letter-spacing:.04em}
+.cr .row{display:grid;grid-template-columns:1.3fr 1fr;gap:10px;margin-top:10px}
+.cr .panel{background:#0C1822;border:1px solid #1B2B39;padding:12px 14px;min-height:180px}
+.cr .panel h5{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#7E97A8;margin:0 0 10px;font-weight:500}
+.cr .track{height:44px;display:flex;align-items:flex-end;gap:2px}
+.cr .track i{flex:1;background:#1C6E68;display:block}
+.cr .alert{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #142430;font-size:10px;color:#B7C9D6}
+.cr .alert b{color:#F3B45C;font-weight:500}
+.cr .chain{margin-top:10px;min-height:0}
+.cr .nodes{display:flex;align-items:center;gap:7px}
+.cr .node{flex:1;background:#0A1620;border:1px solid #1B2B39;padding:8px 9px}
+.cr .node b{display:block;font-family:"JetBrains Mono";font-size:9px;color:#E9F1F7;font-weight:500;letter-spacing:.04em}
+.cr .node span{display:block;font-size:8.5px;color:#7E97A8;margin-top:2px}
+.cr .node.warn{border-color:#5A3A12;background:#1A1206}
+.cr .node.warn b{color:#F3B45C}
+.cr .nodes i{width:9px;height:1px;background:#2A4152;flex:none}
+.cr .dot{width:6px;height:6px;border-radius:50%;background:#EDA22E;margin-top:5px;flex:none}
+
+/* tablet */
+.tab-wrap{background:#E9EFF5;padding:26px;display:grid;place-items:center;min-height:560px;flex:1}
+.tablet{width:420px;background:#0A121A;border-radius:18px;padding:10px;box-shadow:0 24px 50px rgba(10,18,26,.22)}
+.tablet .screen{background:#F4F3EE;border-radius:11px;overflow:hidden}
+.tablet .tbar{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#fff;border-bottom:1px solid #DADCD6}
+.tablet .tbar img{width:78px}
+.tablet .tbar .off{font-family:"JetBrains Mono";font-size:7px;letter-spacing:.08em;color:#7A4A00;background:#FBF0DC;border:1px solid #E8CFA4;padding:3px 5px}
+.tablet .tbody{padding:12px}
+.tablet .tcard{background:#fff;border:1px solid #D5D8D2;padding:10px 11px;margin-bottom:9px}
+.tablet .tcard .k{font-family:"JetBrains Mono";font-size:7.5px;letter-spacing:.1em;color:#5B7288}
+.tablet .tcard .t{font-size:12px;color:#12283D;font-weight:600;margin-top:2px}
+.tablet .tcard .s{font-size:9px;color:#4E626C;margin-top:4px;line-height:1.45}
+.tablet .trow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tablet .tbtn{border:1px solid #B9C2BC;background:#fff;padding:8px;font-size:9px;color:#12283D;text-align:center}
+.tablet .tbtn.pri{background:#0B6B63;border-color:#0B6B63;color:#fff}
+.tablet .spine{display:flex;gap:4px;margin-top:8px}
+.tablet .spine i{height:4px;flex:1;background:#D5D8D2}
+.tablet .spine i.on{background:#0B6B63}
+.tablet .spine i.w{background:#C8922F}
+
+/* signage */
+.signage{background:#0A121A;min-height:300px;display:grid;place-items:center;position:relative;overflow:hidden;flex:1}
+.signage .inner{text-align:center;position:relative;z-index:2}
+.signage img{width:240px;margin:0 auto 26px;display:block}
+.signage .line{width:54px;height:2px;background:var(--tealB);margin:0 auto 18px}
+.signage .cap{font-family:"JetBrains Mono";font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:#A7C2D2;white-space:nowrap}
+.signage .glow{position:absolute;left:50%;top:34%;transform:translate(-50%,-50%);width:560px;height:240px;background:radial-gradient(closest-side,rgba(45,212,191,.08),transparent)}
+
+/* pitch */
+.pitch{background:radial-gradient(700px 380px at 20% 20%,#123055,#0A121A 70%);min-height:360px;padding:34px 38px;display:flex;flex-direction:column;justify-content:space-between;color:#F7FAFC;position:relative;overflow:hidden;flex:1}
+.pitch .p-top{display:flex;justify-content:space-between;align-items:flex-start}
+.pitch img{width:150px}
+.pitch .p-meta{font-family:"JetBrains Mono";font-size:7.5px;letter-spacing:.12em;color:#7E97A8;text-align:right;line-height:1.7}
+.pitch h4{font-size:38px;line-height:1.02;letter-spacing:-.03em;max-width:520px;margin:22px 0 10px}
+.pitch h4 em{font-style:normal;color:var(--tealB)}
+.pitch .p-sub{font-size:10px;color:#A9BECC;max-width:400px;line-height:1.6}
+.pitch .p-foot{font-family:"JetBrains Mono";font-size:7.5px;letter-spacing:.14em;color:#7E97A8;text-transform:uppercase}
+
+/* usage */
+.usage{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.u-card{background:#fff;border:1px solid var(--line);padding:18px}
+.u-card .u-art{height:130px;display:grid;place-items:center;background:#F4F8FB;border:1px solid #E4ECF3;margin-bottom:14px;overflow:hidden}
+.u-card .u-art img{width:150px}
+.u-card .u-t{font-size:12px;font-weight:600;color:var(--navy)}
+.u-card .u-d{font-size:11px;line-height:1.5;color:#5B7288;margin-top:4px}
+.bad .u-t{color:#9A3412}
+.bad .u-art{background:#FDF6F2;border-color:#F0DED4}
+
+/* files */
+.ftab{width:100%;border-collapse:collapse;font-size:12px}
+.ftab th{text-align:left;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding:0 0 10px;font-weight:600}
+.ftab td{padding:10px 0;border-top:1px solid var(--line);color:#3C5165;vertical-align:top}
+.ftab td.mono{color:var(--navy);font-size:11px}
+.ftab td.use{color:#6B7E90;font-size:11px}
+.dark .ftab th{color:#8FA6B7}
+.dark .ftab td{color:#B7C9D6;border-top-color:#1D2E3D}
+.dark .ftab td.mono{color:#7FE8D8}
+.dark .ftab td.use{color:#93AAB9}
+
+/* footer */
+.page-foot{background:var(--ink);color:#7E97A8;padding:46px 96px;display:flex;justify-content:space-between;align-items:center}
+.page-foot img{width:130px;opacity:.9}
+.page-foot .fmeta{font-family:"JetBrains Mono";font-size:9px;letter-spacing:.12em;text-transform:uppercase;line-height:1.8;text-align:right}
+</style>
+</head>
+<body>
+<div class="sheet">
+
+<!-- ================= COVER ================= -->
+<section class="cover">
+  <img class="ghost" src="logo/nidan-mark-dark.svg" alt="">
+  <div class="top">
+    <img src="logo/nidan-logo-primary-dark.svg" style="width:310px" alt="NIDAN">
+    <div class="meta">BRAND IDENTITY<br>VERSION 1.0<br>NOVEMBER 2026</div>
+  </div>
+  <div class="main">
+    <div class="eyebrow">NIDAN · <span class="hi">निदान</span> · DIAGNOSIS</div>
+    <h1>Two rails.<br><em>One signal.</em></h1>
+    <p class="lede">A predictive failure propagation layer for Indian Railway track circuits. It reads the track, explains what it sees, and never touches the interlocking.</p>
+  </div>
+  <div class="bottom">
+    <div>ADVISORY · NON-VITAL · EXPLAINABLE</div>
+    <div>Prepared for the <b>NIDAN programme</b> · Indian Railways</div>
+  </div>
+</section>
+
+<!-- ================= 01 IDEA ================= -->
+<section>
+  <div class="sec-head">
+    <div class="num">01</div>
+    <div>
+      <div class="eyebrow" style="margin-bottom:12px">The mark</div>
+      <h2>A track section,<br>read by its own signal.</h2>
+    </div>
+    <p>Every track circuit is two rails and a current that runs between them. NIDAN adds nothing to the track; it listens to what the circuit already carries. The mark is built from exactly those three elements — and from the same geometry as the wordmark's first letter.</p>
+  </div>
+
+  <div class="idea">
+    <div>
+      <p style="font-size:17px;line-height:1.7;color:#1B3A52">The letterform is not a badge placed beside the name. It <b style="color:var(--navy)">is</b> the first letter of NIDAN — drawn from the typeface's own N, then split into two rails and a signal.</p>
+      <div class="note"><b>Read-only by design.</b> The teal diagonal is the diagnostic current, not a switch. Nothing in the identity implies control: no arrows, no toggles, no green-for-go. NIDAN is an instrument.</div>
+    </div>
+    <div>
+      <div class="equation">
+        <div class="eq-item"><img src="logo/construction-rails.svg" alt=""><div class="eq-label">Two rails</div></div>
+        <div class="eq-op">+</div>
+        <div class="eq-item"><img src="logo/construction-signal.svg" alt=""><div class="eq-label">One signal</div></div>
+        <div class="eq-op">=</div>
+        <div class="eq-item"><img src="logo/construction-full.svg" alt=""><div class="eq-label">NIDAN</div></div>
+      </div>
+      <div class="rule" style="margin:34px 0 18px"></div>
+      <div style="display:flex;justify-content:space-between;font-family:'JetBrains Mono';font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)">
+        <span>Construction · Archivo 600 / 1000 upem</span><span>Diagonal ≈54° · stem 0.125 em</span><span>Signal #0E8F86</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 02 MARK ================= -->
+<section style="padding-top:0">
+  <div class="sec-head">
+    <div class="num">02</div>
+    <div><div class="eyebrow" style="margin-bottom:12px">The mark</div><h2>One shape,<br>every size.</h2></div>
+    <p>The N is drawn to the wordmark's metrics, so it never looks pasted on. At 16 px the teal diagonal still reads; in one colour the silhouette still holds.</p>
+  </div>
+
+  <div class="mark-grid">
+    <div class="plate mark-main">
+      <img src="logo/nidan-mark.svg" style="width:330px" alt="NIDAN mark">
+      <span class="tag">Primary mark · light</span>
+    </div>
+    <div class="plate mark-side">
+      <img src="logo/nidan-mark-dark.svg" style="width:330px" alt="NIDAN mark">
+      <span class="tag" style="color:#5F7A8C">Primary mark · dark</span>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:22px;margin-top:22px">
+    <div class="grid-plate">
+      <img src="logo/nidan-mark.svg" style="width:250px;position:relative;z-index:2" alt="">
+      <span class="tag" style="position:absolute;left:16px;bottom:12px;font-family:'JetBrains Mono';font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#8AA0B2">Construction grid</span>
+    </div>
+    <div class="plate" style="height:520px;flex-direction:column;display:flex;align-items:center;justify-content:center;gap:26px">
+      <div class="clearspace">
+        <img src="logo/nidan-mark.svg" style="width:112px" alt="">
+        <span class="cx cs-t">x</span><span class="cx cs-b">x</span><span class="cx cs-l">x</span><span class="cx cs-r">x</span>
+      </div>
+      <div style="font-family:'JetBrains Mono';font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#8AA0B2">Clear space = ½ x</div>
+    </div>
+    <div class="plate" style="height:520px;flex-direction:column;display:flex;align-items:center;justify-content:center;gap:30px">
+      <div style="display:flex;align-items:flex-end;gap:26px">
+        <figure style="margin:0;text-align:center"><img src="logo/nidan-mark.svg" width="96" alt=""><figcaption style="font-family:'JetBrains Mono';font-size:8px;color:#8AA0B2;margin-top:8px">96</figcaption></figure>
+        <figure style="margin:0;text-align:center"><img src="logo/nidan-mark.svg" width="48" alt=""><figcaption style="font-family:'JetBrains Mono';font-size:8px;color:#8AA0B2;margin-top:8px">48</figcaption></figure>
+        <figure style="margin:0;text-align:center"><img src="logo/nidan-mark.svg" width="24" alt=""><figcaption style="font-family:'JetBrains Mono';font-size:8px;color:#8AA0B2;margin-top:8px">24</figcaption></figure>
+        <figure style="margin:0;text-align:center"><img src="logo/nidan-mark.svg" width="16" alt=""><figcaption style="font-family:'JetBrains Mono';font-size:8px;color:#8AA0B2;margin-top:8px">16</figcaption></figure>
+      </div>
+      <div style="font-family:'JetBrains Mono';font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#8AA0B2">Minimum digital 16 px · print 10 mm</div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 03 LOCKUPS ================= -->
+<section class="dark">
+  <div class="sec-head">
+    <div class="num">03</div>
+    <div><div class="eyebrow" style="margin-bottom:12px">Lockups</div><h2>One system,<br>four registers.</h2></div>
+    <p>The primary lockup carries the bilingual name. The institutional lockup adds the descriptor. The vertical crest is for square and physical media. The horizontal mark is for interfaces where height is scarce.</p>
+  </div>
+
+  <div class="lock-grid">
+    <div class="plate" style="background:#F7FAFC;border-color:#F7FAFC"><img src="logo/nidan-logo-primary.svg" alt="Primary"><span class="tag">Primary · light</span></div>
+    <div class="plate dark"><img src="logo/nidan-logo-primary-dark.svg" alt="Primary dark"><span class="tag">Primary · dark</span></div>
+    <div class="plate" style="background:#F7FAFC;border-color:#F7FAFC"><img src="logo/nidan-logo-institutional.svg" alt="Institutional"><span class="tag">Institutional · descriptor</span></div>
+    <div class="plate dark"><img src="logo/nidan-logo-vertical-dark.svg" style="max-width:36%" alt="Vertical"><span class="tag">Vertical crest</span></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:22px;margin-top:22px">
+    <div class="plate" style="background:#F7FAFC;border-color:#F7FAFC;height:210px"><img src="logo/nidan-logo-horizontal.svg" style="max-width:78%" alt=""><span class="tag">Horizontal · interface</span></div>
+    <div class="plate" style="background:#F7FAFC;border-color:#F7FAFC;height:210px"><img src="logo/nidan-logo-mono.svg" style="max-width:72%" alt=""><span class="tag">Mono · single colour</span></div>
+    <div class="plate" style="background:#F7FAFC;border-color:#F7FAFC;height:210px"><img src="logo/nidan-logo-mono-tint.svg" style="max-width:72%" alt=""><span class="tag">Mono · tint 45%</span></div>
+  </div>
+</section>
+
+<!-- ================= 04 BILINGUAL ================= -->
+<section>
+  <div class="sec-head">
+    <div class="num">04</div>
+    <div><div class="eyebrow" style="margin-bottom:12px">Bilingual</div><h2>The name is<br>already a diagnosis.</h2></div>
+    <p><span class="hi">निदान</span> (nidān) is the act of determining the cause of a condition. The Devanagari is not decoration and not a translation — it is the same name, and it is set as a first-class part of the lockup.</p>
+  </div>
+
+  <div class="bilingual">
+    <div>
+      <div class="deva-big hi">निदान</div>
+      <div style="margin-top:20px;font-family:'JetBrains Mono';font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)">Nidān · diagnosis · the determination of cause</div>
+      <div class="rule" style="margin:30px 0 0"></div>
+      <div style="display:flex;gap:40px;margin-top:24px">
+        <div><div style="font-family:'JetBrains Mono';font-size:9px;color:var(--muted);letter-spacing:.1em">TYPE</div><div style="font-size:13px;color:var(--navy);margin-top:4px">Noto Sans Devanagari</div></div>
+        <div><div style="font-family:'JetBrains Mono';font-size:9px;color:var(--muted);letter-spacing:.1em">SIZE</div><div style="font-size:13px;color:var(--navy);margin-top:4px">0.38 × Latin cap</div></div>
+        <div><div style="font-family:'JetBrains Mono';font-size:9px;color:var(--muted);letter-spacing:.1em">ALIGN</div><div style="font-size:13px;color:var(--navy);margin-top:4px">Centred</div></div>
+      </div>
+    </div>
+    <div>
+      <div class="plate" style="height:230px;background:#fff"><img src="logo/nidan-logo-primary.svg" style="max-width:76%" alt=""><span class="tag">Correct · centred, 0.38</span></div>
+      <div class="bi-rules">
+        <div class="bi-rule"><span>01</span><div>Set the Devanagari at 38% of the Latin size and centre it under the wordmark. Never stretch it to fit the width.</div></div>
+        <div class="bi-rule"><span>02</span><div>Keep the shirorekha clear. Do not place the line inside a box, rule or tight margin.</div></div>
+        <div class="bi-rule"><span>03</span><div>In body copy, pair “NIDAN” with “<span class="hi">निदान</span>” on first mention only. Do not repeat it in every heading.</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 05 COLOUR ================= -->
+<section class="dark">
+  <div class="sec-head">
+    <div class="num">05</div>
+    <div><div class="eyebrow" style="margin-bottom:12px">Colour</div><h2>Authority in navy.<br>Signal in teal.</h2></div>
+    <p>Navy carries the institution. Teal is the live signal and the only colour in the mark. Gold is caution, never decoration. Red is reserved for the Critical state in the product and never appears in the identity.</p>
+  </div>
+
+  <div class="swatches">
+    <div class="sw"><div class="chip" style="background:#0A121A"></div><div class="body"><div class="nm">Ink</div><div class="hx">#0A121A · 10 18 26</div><div class="use">Control-room ground</div></div></div>
+    <div class="sw"><div class="chip" style="background:#0B2545"></div><div class="body"><div class="nm">Navy</div><div class="hx">#0B2545 · 11 37 69</div><div class="use">Primary brand, type</div></div></div>
+    <div class="sw"><div class="chip" style="background:#0E8F86"></div><div class="body"><div class="nm">Signal Teal</div><div class="hx">#0E8F86 · 14 143 134</div><div class="use">The mark, live data</div></div></div>
+    <div class="sw"><div class="chip" style="background:#2DD4BF"></div><div class="body"><div class="nm">Bright Teal</div><div class="hx">#2DD4BF · 45 212 191</div><div class="use">Dark surfaces only</div></div></div>
+    <div class="sw"><div class="chip" style="background:#C8922F"></div><div class="body"><div class="nm">Gold</div><div class="hx">#C8922F · 200 146 47</div><div class="use">Caution, precedent</div></div></div>
+    <div class="sw"><div class="chip" style="background:#F7FAFC;border-bottom:1px solid #DCE5EE"></div><div class="body"><div class="nm">Paper</div><div class="hx">#F7FAFC · 247 250 252</div><div class="use">Light ground</div></div></div>
+    <div class="sw"><div class="chip" style="background:#5B7288"></div><div class="body"><div class="nm">Slate</div><div class="hx">#5B7288 · 91 114 136</div><div class="use">Secondary text</div></div></div>
+    <div class="sw"><div class="chip" style="background:#0B6B63"></div><div class="body"><div class="nm">Deep Teal</div><div class="hx">#0B6B63 · 11 107 99</div><div class="use">Small teal text (6.1:1)</div></div></div>
+  </div>
+
+  <div class="ratio">
+    <div style="flex:60;background:#16375C">60 · NAVY / INK</div>
+    <div style="flex:30;background:#F7FAFC;color:#0B2545">30 · PAPER</div>
+    <div style="flex:10;background:#0E8F86">10 · SIGNAL</div>
+  </div>
+
+  <table class="ctab">
+    <tr><th>Pair</th><th>Ratio</th><th>Use</th></tr>
+    <tr><td>Navy on Paper</td><td class="mono">14.7 : 1</td><td>Body, wordmark, headings</td></tr>
+    <tr><td>White on Navy</td><td class="mono">15.4 : 1</td><td>Dark lockups, signage</td></tr>
+    <tr><td>Paper on Ink</td><td class="mono">18.0 : 1</td><td>Control-room UI</td></tr>
+    <tr><td>Bright Teal on Navy</td><td class="mono">8.3 : 1</td><td>Signal on dark</td></tr>
+    <tr><td>Signal Teal on Paper</td><td class="mono">3.8 : 1</td><td>Graphics only, not body text</td></tr>
+    <tr><td>Deep Teal on Paper</td><td class="mono">6.1 : 1</td><td>Small teal text</td></tr>
+  </table>
+</section>
+
+<!-- ================= 06 TYPE ================= -->
+<section>
+  <div class="sec-head">
+    <div class="num">06</div>
+    <div><div class="eyebrow" style="margin-bottom:12px">Typography</div><h2>Engineered,<br>not ornamental.</h2></div>
+    <p>Archivo gives the name a sturdy, institutional voice. Inter keeps dense screens readable. Noto Sans Devanagari carries the Hindi without compromise. JetBrains Mono is reserved for telemetry and identifiers.</p>
+  </div>
+
+  <div class="type-grid">
+    <div class="type-card"><div class="aa" style="font-family:Archivo;font-weight:600">Aa</div><div class="nm">Archivo</div><div class="role">Display · wordmark</div><div class="sample" style="font-family:Archivo;font-size:13px">Predictive failure propagation for track circuits. 0123456789</div></div>
+    <div class="type-card"><div class="aa" style="font-family:Inter;font-weight:500">Aa</div><div class="nm">Inter</div><div class="role">Interface · body</div><div class="sample" style="font-family:Inter">Watch · Warning · Critical. 1,284 track circuits across 42 stations.</div></div>
+    <div class="type-card"><div class="aa hi" style="font-weight:500">नि</div><div class="nm">Noto Sans Devanagari</div><div class="role">Bilingual · Hindi</div><div class="sample hi" style="font-size:13px">निदान — कारण का निर्धारण। पटरी परिपथ, बैलास्ट, रिले।</div></div>
+    <div class="type-card"><div class="aa" style="font-family:'JetBrains Mono';font-weight:500;font-size:50px">01</div><div class="nm">JetBrains Mono</div><div class="role">Telemetry · identifiers</div><div class="sample mono" style="font-size:11px">ADRA/TC/127 · 1.82 Ω · 0.42 A · 14 d</div></div>
+  </div>
+
+  <div class="scale">
+    <div class="scale-row"><div class="nm">Display</div><div class="sp" style="font-size:44px;line-height:1.05">See the failure before it fails.</div><div class="spx">44 / 46</div></div>
+    <div class="scale-row"><div class="nm">Heading 1</div><div class="sp" style="font-size:30px">Adra division, next 7 days</div><div class="spx">30 / 36</div></div>
+    <div class="scale-row"><div class="nm">Heading 2</div><div class="sp" style="font-size:21px">Common-cause cluster c-9917</div><div class="spx">21 / 27</div></div>
+    <div class="scale-row"><div class="nm">Body</div><div style="font-size:15px;line-height:1.6;color:#3C5165">Ballast resistance is falling while feed current holds. The signature matches a drainage fault seen twice in this section since March.</div><div class="spx">15 / 25</div></div>
+    <div class="scale-row"><div class="nm">Caption</div><div style="font-family:'JetBrains Mono';font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#5B7288">ADVISORY · NON-VITAL · 14 JUL 2026</div><div class="spx">10 / 14</div></div>
+  </div>
+</section>
+
+<!-- ================= 07 CONTEXT ================= -->
+<section class="dark">
+  <div class="sec-head">
+    <div class="num">07</div>
+    <div><div class="eyebrow" style="margin-bottom:12px">In context</div><h2>From the letterhead<br>to the control room.</h2></div>
+    <p>The identity has to survive a government file, a divisional notice board, a field tablet in sunlight and a pitch deck. These are the same assets, not adaptations.</p>
+  </div>
+
+  <div class="context">
+    <!-- letterhead -->
+    <div class="mock">
+      <div class="lh">
+        <div class="lh-top">
+          <img src="logo/nidan-logo-primary.svg" style="width:158px" alt="">
+          <div class="addr">SIGNAL &amp; TELECOM<br>ADRA DIVISION<br>SOUTH EASTERN RAILWAY<br>ADRA — 723121</div>
+        </div>
+        <div class="lh-rule"></div>
+        <div class="subject">SUBJECT · PREDICTIVE FAILURE PROPAGATION — PILOT READINESS</div>
+        <div class="date">14 July 2026 · Ref. NIDAN/ADRA/2026/014</div>
+        <div class="body">
+          <p>The NIDAN pilot will run as a read-only advisory layer over the existing RDPMS telemetry for 42 track circuits in the Adra–Bishnupur section.</p>
+          <p>No write path to interlocking, signals, routes or track circuits is provisioned. Every alert carries a physics explanation, model drivers and a precedent set; the technician remains the decision-maker.</p>
+        </div>
+        <div class="sign">A. K. Sharma<br>SSE (Sig), Adra Division</div>
+        <img class="wm" src="logo/nidan-mark.svg" alt="">
+      </div>
+      <span class="cap" style="color:#8AA0B2">Letterhead · A4</span>
+    </div>
+
+    <!-- badge -->
+    <div class="mock">
+      <div class="badge-wrap">
+        <div class="badge">
+          <div class="clip"></div>
+          <div class="head">
+            <img src="logo/nidan-logo-primary-dark.svg" alt="">
+            <div class="lvl">PILOT<br>LEVEL 2</div>
+          </div>
+          <div class="photo">PHOTOGRAPH</div>
+          <div class="id">
+            <div class="nm">Ananya K. Sharma</div>
+            <div class="role">SSE (Sig) · Adra Division</div>
+            <div class="div">NIDAN Diagnostic Cell<br>South Eastern Railway</div>
+          </div>
+          <div class="foot">
+            <div class="bars"><i style="height:18px"></i><i style="height:24px"></i><i style="height:12px"></i><i style="height:22px"></i><i style="height:16px"></i><i style="height:26px"></i><i style="height:10px"></i><i style="height:20px"></i><i style="height:14px"></i><i style="height:24px"></i><i style="height:18px"></i><i style="height:8px"></i><i style="height:22px"></i><i style="height:16px"></i><i style="height:26px"></i><i style="height:12px"></i><i style="height:20px"></i><i style="height:14px"></i></div>
+            <div class="qr"></div>
+          </div>
+        </div>
+      </div>
+      <span class="cap">Access badge · 270 × 440</span>
+    </div>
+
+    <!-- control room -->
+    <div class="mock">
+      <div class="cr">
+        <div class="bar">
+          <img src="logo/nidan-logo-horizontal-dark.svg" alt="">
+          <div class="nav"><b>Overview</b><span>Alert queue</span><span>Circuits</span><span>Rolling Block</span><span>Model health</span></div>
+          <div class="right"><div class="chip">ADVISORY · NON-VITAL</div><div class="avatar">AK</div></div>
+        </div>
+        <div class="body">
+          <div class="kpis">
+            <div class="kpi"><div class="l">Open Watch</div><div class="v">18 <small>+4 / 24h</small></div></div>
+            <div class="kpi"><div class="l">Critical</div><div class="v" style="color:#FF6B70">03 <small>2 ack</small></div></div>
+            <div class="kpi"><div class="l">Circuits</div><div class="v">1,284</div></div>
+          </div>
+          <div class="row">
+            <div class="panel">
+              <h5>Ballast resistance · c-9917</h5>
+              <div class="track">
+                <i style="height:62%"></i><i style="height:58%"></i><i style="height:55%"></i><i style="height:51%"></i><i style="height:49%"></i><i style="height:44%"></i><i style="height:41%"></i><i style="height:39%"></i><i style="height:36%"></i><i style="height:33%"></i><i style="height:31%"></i><i style="height:29%"></i><i style="height:26%"></i><i style="height:24%"></i><i style="height:21%"></i><i style="height:19%"></i><i style="height:17%"></i><i style="height:15%"></i>
+              </div>
+            </div>
+            <div class="panel">
+              <h5>Next 7 days</h5>
+              <div class="alert"><span class="dot"></span><div><b>ADRA/TC/127</b><br>Drainage · 14 d</div></div>
+              <div class="alert"><span class="dot" style="background:#2DD4BF"></span><div><b style="color:#7FE8D8">ADRA/TC/211</b><br>Ballast · 21 d</div></div>
+              <div class="alert"><span class="dot" style="background:#2DD4BF"></span><div><b style="color:#7FE8D8">ADRA/TC/094</b><br>Relay · 28 d</div></div>
+            </div>
+          </div>
+          <div class="panel chain">
+            <h5>Propagation chain · c-9917</h5>
+            <div class="nodes">
+              <div class="node"><b>TC/127</b><span>drainage · 14 d</span></div>
+              <i></i>
+              <div class="node"><b>TC/211</b><span>ballast · 21 d</span></div>
+              <i></i>
+              <div class="node"><b>TC/094</b><span>relay · 28 d</span></div>
+              <i></i>
+              <div class="node warn"><b>BLOCK</b><span>impact · 31 d</span></div>
+            </div>
+          </div>
+          <div class="crfoot"><span>Model v2.4 · 1,284 circuits · last sync 14:32:07 IST</span><span>No write path to interlocking</span></div>
+        </div>
+      </div>
+      <span class="cap">Command centre · header</span>
+    </div>
+
+    <!-- tablet -->
+    <div class="mock">
+      <div class="tab-wrap">
+        <div class="tablet">
+          <div class="screen">
+            <div class="tbar">
+              <img src="logo/nidan-logo-horizontal.svg" alt="">
+              <div class="off">OFFLINE · QUEUED</div>
+            </div>
+            <div class="tbody">
+              <div class="tcard">
+                <div class="k">ADRA/TC/127 · WATCH</div>
+                <div class="t">Clear drain and fouled ballast</div>
+                <div class="s">Water is bridging the ballast. Conductance is 31% above dry baseline. Fit the work inside the published Rolling Block.</div>
+              </div>
+              <div class="trow">
+                <div class="tbtn">Measure</div>
+                <div class="tbtn">Confirm</div>
+              </div>
+              <div class="trow" style="margin-top:8px">
+                <div class="tbtn pri">Queue to SMMS</div>
+                <div class="tbtn">Not found</div>
+              </div>
+              <div class="spine"><i class="on"></i><i class="w"></i><i></i><i></i></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <span class="cap">Field tablet · 420 px</span>
+    </div>
+
+    <!-- signage -->
+    <div class="mock">
+      <div class="signage">
+        <div class="glow"></div>
+        <div class="inner">
+          <img src="logo/nidan-logo-primary-dark.svg" alt="">
+          <div class="line"></div>
+          <div class="cap">Divisional Diagnostic Cell · Adra</div>
+        </div>
+      </div>
+      <span class="cap" style="color:#8AA0B2">Signage · 900 × 300</span>
+    </div>
+
+    <!-- pitch -->
+    <div class="mock">
+      <div class="pitch">
+        <div class="p-top">
+          <img src="logo/nidan-logo-horizontal-dark.svg" alt="">
+          <div class="p-meta">SEED ROUND<br>NOV 2026<br>CONFIDENTIAL</div>
+        </div>
+        <div>
+          <h4>See the failure<br><em>before it fails.</em></h4>
+          <div class="p-sub">An advisory layer that turns track-circuit telemetry into a named failure mode, a calibrated life and a work order that fits the block.</div>
+        </div>
+        <div class="p-foot">NIDAN · PREDICTIVE FAILURE PROPAGATION</div>
+      </div>
+      <span class="cap" style="color:#8AA0B2">Pitch slide · 16:9</span>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 08 USAGE ================= -->
+<section>
+  <div class="sec-head">
+    <div class="num">08</div>
+    <div><div class="eyebrow" style="margin-bottom:12px">Usage</div><h2>Six rules.<br>No exceptions.</h2></div>
+    <p>The identity is deliberately narrow. Restraint is what makes it credible to a reviewer, an OEM and an investor in the same room.</p>
+  </div>
+
+  <div class="usage">
+    <div class="u-card"><div class="u-art"><img src="logo/nidan-logo-primary.svg" alt=""></div><div class="u-t">Do · use the primary lockup</div><div class="u-d">On light grounds, at 38% Devanagari, with clear space on all sides.</div></div>
+    <div class="u-card"><div class="u-art"><img src="logo/nidan-logo-mono.svg" alt=""></div><div class="u-t">Do · use mono for one colour</div><div class="u-d">Single-colour print, engraving, embroidery and fax-grade documents.</div></div>
+    <div class="u-card"><div class="u-art"><img src="logo/nidan-app-icon.svg" style="width:92px" alt=""></div><div class="u-t">Do · use the app icon square</div><div class="u-d">The icon is the only asset with a filled ground. Never place the full lockup inside it.</div></div>
+    <div class="u-card bad"><div class="u-art"><img src="logo/nidan-logo-primary.svg" style="width:190px;transform:scaleX(1.35)" alt=""></div><div class="u-t">Don't · stretch or condense</div><div class="u-d">The N and the Devanagari are drawn to fixed proportions. Scale both axes together.</div></div>
+    <div class="u-card bad"><div class="u-art"><img src="logo/nidan-logo-primary.svg" style="width:150px;filter:hue-rotate(150deg)" alt=""></div><div class="u-t">Don't · recolour the mark</div><div class="u-d">Teal is the signal. Never use red, green or a gradient inside the letterform.</div></div>
+    <div class="u-card bad"><div class="u-art"><img src="logo/nidan-logo-primary.svg" style="width:150px;transform:rotate(-9deg);filter:drop-shadow(0 8px 10px rgba(0,0,0,.35))" alt=""></div><div class="u-t">Don't · rotate or add effects</div><div class="u-d">No shadows, glows, bevels, outlines or perspective. The mark sits flat on the page.</div></div>
+  </div>
+
+  <div class="note" style="margin-top:30px;max-width:900px"><b>The boundary is the brand.</b> NIDAN is advisory and non-vital. No asset may imply a write path to interlocking, signals, routes or track circuits. Do not use green as a "go" signal, do not draw switches, and do not present the product as a replacement for the interlocking or the technician.</div>
+</section>
+
+<!-- ================= 09 FILES ================= -->
+<section class="dark" style="padding-top:64px;padding-bottom:64px">
+  <div class="sec-head" style="margin-bottom:34px">
+    <div class="num">09</div>
+    <div><div class="eyebrow" style="margin-bottom:12px">Files</div><h2>The kit.</h2></div>
+    <p>Every asset is vector, outlined and background-free unless stated. The wordmark is not live text; do not retype it.</p>
+  </div>
+  <table class="ftab">
+    <tr><th style="width:38%">File</th><th>Use</th><th style="width:18%">Format</th></tr>
+    <tr><td class="mono">logo/nidan-logo-primary.svg</td><td class="use">Primary bilingual lockup · light grounds</td><td class="use">SVG · transparent</td></tr>
+    <tr><td class="mono">logo/nidan-logo-primary-dark.svg</td><td class="use">Primary bilingual lockup · dark grounds</td><td class="use">SVG · transparent</td></tr>
+    <tr><td class="mono">logo/nidan-logo-institutional.svg</td><td class="use">Descriptor lockup · documents, title pages</td><td class="use">SVG · transparent</td></tr>
+    <tr><td class="mono">logo/nidan-logo-vertical.svg</td><td class="use">Crest · signage, badges, square media</td><td class="use">SVG · transparent</td></tr>
+    <tr><td class="mono">logo/nidan-logo-horizontal.svg</td><td class="use">Interface header · height-constrained</td><td class="use">SVG · transparent</td></tr>
+    <tr><td class="mono">logo/nidan-mark.svg</td><td class="use">Mark alone · watermarks, patterns, favicons</td><td class="use">SVG · transparent</td></tr>
+    <tr><td class="mono">logo/nidan-logo-mono.svg</td><td class="use">Single-colour print and engraving</td><td class="use">SVG · transparent</td></tr>
+    <tr><td class="mono">logo/nidan-app-icon.svg</td><td class="use">App icon and store listing</td><td class="use">SVG · filled</td></tr>
+    <tr><td class="mono">logo/nidan-favicon.svg</td><td class="use">Browser favicon · simplified</td><td class="use">SVG · filled</td></tr>
+    <tr><td class="mono">brand-sheet.html</td><td class="use">This document · self-contained, offline</td><td class="use">HTML + local fonts</td></tr>
+  </table>
+</section>
+
+<div class="page-foot">
+  <img src="logo/nidan-logo-horizontal-dark.svg" alt="">
+  <div class="fmeta">NIDAN · निदान<br>BRAND IDENTITY V1.0 · NOV 2026<br>ADVISORY · NON-VITAL</div>
+</div>
+
+</div>
+</body>
+</html>
