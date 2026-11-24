@@ -1,0 +1,55 @@
+# OS noise
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Environment & secrets (never commit)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Python / Backend
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+.coverage
+htmlcov/
+
+# Local SQLite / database files
+*.sqlite
+*.sqlite3
+*.db
+
+# Node / Frontend / Build output
+node_modules/
+.output/
+.nitro/
+.vinxi/
+.tanstack/
+.wrangler/
+.dev.vars
+dist/
+dist-ssr/
+playwright-report/
+test-results/
+.eslintcache
+*.local
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Editor settings
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.sw?

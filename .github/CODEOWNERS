@@ -1,0 +1,11 @@
+# Default repository owner (update per stream as team members join)
+* @MyselfDebdatta
+
+# Workflow & CI governance
+/.github/ @MyselfDebdatta
+
+# Workstreams
+/docs/ @MyselfDebdatta
+/design/ @MyselfDebdatta
+/Nidan-Frontend/ @MyselfDebdatta
+/backend/ @MyselfDebdatta
