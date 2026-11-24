@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Division command centre · NIDAN</title>
+<meta name="description" content="NIDAN command centre mockup — predictive failure propagation for Indian Railways track circuits.">
+<link rel="stylesheet" href="../assets/tokens.css">
+<link rel="stylesheet" href="../assets/app.css">
+</head>
+<body data-page="command" data-scope="SER / ADRA / ADRA YARD" data-role="SSE / Sig · Adra">
+<div class="app">
+  <main class="main">
+    <div class="main__inner">
+
+      <!-- ================= Page head ================= -->
+      <header class="page-head">
+        <div>
+          <div class="page-head__eyebrow">
+            <span class="label label--teal">Division command centre</span>
+            <span class="chip chip--mono">42 stations</span>
+            <span class="chip chip--mono">1,284 track circuits</span>
+            <span class="chip">Demo dataset</span>
+          </div>
+          <h1 class="page-head__title">Adra division, next 7 days</h1>
+          <p class="page-head__sub">Ranked by risk × consequence. Every alert is advisory; the system has no write path to interlocking, signals or track circuits.</p>
+        </div>
+        <div class="page-head__actions">
+          <div class="seg" role="group" aria-label="Time range">
+            <button type="button">24 h</button>
+            <button type="button" class="is-on">7 d</button>
+            <button type="button">30 d</button>
+          </div>
+          <button class="btn" type="button">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M10 3v9m0 0 3.2-3.2M10 12 6.8 8.8M4 15.5h12"/></svg>
+            Export pack
+          </button>
+          <button class="btn btn--primary" type="button">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M10 4v12M4 10h12"/></svg>
+            Plan maintenance
+          </button>
+        </div>
+      </header>
+
+      <!-- ================= KPI strip ================= -->
+      <section class="kpis" aria-label="Alert summary">
+        <article class="kpi kpi--critical">
+          <div class="kpi__label"><span class="glyph glyph--critical" aria-hidden="true"></span><span class="label">Critical now</span></div>
+          <div class="kpi__value">3 <small>circuits</small></div>
+          <div class="kpi__foot"><span class="delta delta--up">+1</span> in last 6 h · 1 cluster root</div>
+          <svg class="kpi__spark" data-points="0,0,1,0,1,2,1,3" data-kind="red" aria-hidden="true"></svg>
+        </article>
+        <article class="kpi kpi--warning">
+          <div class="kpi__label"><span class="glyph glyph--warning" aria-hidden="true"></span><span class="label">Warning · 72 h</span></div>
+          <div class="kpi__value">18 <small>circuits</small></div>
+          <div class="kpi__foot"><span class="delta delta--up">+4</span> since 06:00 shift</div>
+          <svg class="kpi__spark" data-points="9,11,10,12,13,12,15,18" data-kind="amber" aria-hidden="true"></svg>
+        </article>
+        <article class="kpi kpi--watch">
+          <div class="kpi__label"><span class="glyph glyph--watch" aria-hidden="true"></span><span class="label">Watch · drift</span></div>
+          <div class="kpi__value">61 <small>circuits</small></div>
+          <div class="kpi__foot"><span class="delta delta--up">+9</span> this week · monsoon onset</div>
+          <svg class="kpi__spark" data-points="40,44,43,47,49,52,56,61" aria-hidden="true"></svg>
+        </article>
+        <article class="kpi kpi--ok">
+          <div class="kpi__label"><span class="glyph glyph--nominal" aria-hidden="true"></span><span class="label">Failures averted · 30 d</span></div>
+          <div class="kpi__value">14 <small>est.</small></div>
+          <div class="kpi__foot"><span class="delta delta--down">−21%</span> failures vs. same period</div>
+          <svg class="kpi__spark" data-points="3,5,6,8,9,11,13,14" data-kind="teal" aria-hidden="true"></svg>
+        </article>
+      </section>
+
+      <!-- ================= Row 1: spine · graph · clusters ================= -->
+      <section class="grid12 mt5" aria-label="Propagation overview">
+
+        <!-- Signal Spine -->
+        <article class="panel c3">
+          <div class="panel__head">
+            <h2>Section spine</h2>
+            <span class="label" style="margin-left:2px">Pūrvarūpa</span>
+            <div class="panel__tools">
+              <span class="chip chip--mono">8 / 42</span>
+            </div>
+          </div>
+          <div class="panel__body panel__body--tight">
+            <div class="spine">
+
+              <div class="spine__item spine__item--critical">
+                <span class="spine__node" aria-hidden="true"></span>
+                <div class="spine__body">
+                  <div class="spine__id">ADRA/TC/31T</div>
+                  <div class="spine__meta"><span>Up Loop · 380 m</span><span>·</span><span>F7 surge</span></div>
+                </div>
+                <div class="spine__rt">
+                  <span class="spine__risk u-red">57%</span>
+                  <span class="spine__bar"><i style="width:57%;background:var(--red-500)"></i></span>
+                </div>
+              </div>
+
+              <div class="spine__item spine__item--warning">
+                <span class="spine__node" aria-hidden="true"></span>
+                <div class="spine__body">
+                  <div class="spine__id">ADRA/TC/14T</div>
+                  <div class="spine__meta"><span>Down Goods · 420 m</span><span>·</span><span>F1 ballast</span></div>
+                </div>
+                <div class="spine__rt">
+                  <span class="spine__risk u-amber">38%</span>
+                  <span class="spine__bar"><i style="width:38%;background:var(--amber-500)"></i></span>
+                </div>
+              </div>
+
+              <div class="spine__item spine__item--warning">
+                <span class="spine__node" aria-hidden="true"></span>
+                <div class="spine__body">
+                  <div class="spine__id">ADRA/TC/21T</div>
+                  <div class="spine__meta"><span>Up Main · 610 m</span><span>·</span><span>F6 supply</span></div>
+                </div>
+                <div class="spine__rt">
+                  <span class="spine__risk u-amber">33%</span>
+                  <span class="spine__bar"><i style="width:33%;background:var(--amber-500)"></i></span>
+                </div>
+              </div>
+
+              <div class="spine__item spine__item--watch">
+                <span class="spine__node" aria-hidden="true"></span>
+                <div class="spine__body">
+                  <div class="spine__id">ADRA/TC/12T</div>
+                  <div class="spine__meta"><span>Down Goods · 420 m</span><span>·</span><span>F1 ballast</span></div>
+                </div>
+                <div class="spine__rt">
+                  <span class="spine__risk u-teal">24%</span>
+                  <span class="spine__bar"><i style="width:24%;background:var(--teal-500)"></i></span>
+                </div>
+              </div>
+
+              <div class="spine__item spine__item--watch">
+                <span class="spine__node" aria-hidden="true"></span>
+                <div class="spine__body">
+                  <div class="spine__id">ADRA/TC/16T</div>
+                  <div class="spine__meta"><span>Up Goods · 400 m</span><span>·</span><span>F1 ballast</span></div>
+                </div>
+                <div class="spine__rt">
+                  <span class="spine__risk u-teal">22%</span>
+                  <span class="spine__bar"><i style="width:22%;background:var(--teal-500)"></i></span>
+                </div>
+              </div>
+
+              <div class="spine__item spine__item--watch">
+                <span class="spine__node" aria-hidden="true"></span>
+                <div class="spine__body">
+                  <div class="spine__id">ADRA/TC/04T</div>
+                  <div class="spine__meta"><span>Shunt neck · 180 m</span><span>·</span><span>F9 shunting</span></div>
+                </div>
+                <div class="spine__rt">
+                  <span class="spine__risk u-teal">21%</span>
+                  <span class="spine__bar"><i style="width:21%;background:var(--teal-500)"></i></span>
+                </div>
+              </div>
+
+              <div class="spine__item spine__item--nominal">
+                <span class="spine__node" aria-hidden="true"></span>
+                <div class="spine__body">
+                  <div class="spine__id">ADRA/TC/09T</div>
+                  <div class="spine__meta"><span>Down Main · 640 m</span><span>·</span><span>6% risk</span></div>
+                </div>
+                <div class="spine__rt">
+                  <span class="spine__risk u-dim">6%</span>
+                  <span class="spine__bar"><i style="width:6%;background:var(--ok-500)"></i></span>
+                </div>
+              </div>
+
+              <div class="spine__item spine__item--nominal">
+                <span class="spine__node" aria-hidden="true"></span>
+                <div class="spine__body">
+                  <div class="spine__id">ADRA/TC/27T</div>
+                  <div class="spine__meta"><span>Down Loop · 300 m</span><span>·</span><span>4% risk</span></div>
+                </div>
+                <div class="spine__rt">
+                  <span class="spine__risk u-dim">4%</span>
+                  <span class="spine__bar"><i style="width:4%;background:var(--ok-500)"></i></span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+          <div class="panel__foot">
+            <span class="u-row" style="gap:10px">
+              <span class="u-row"><span class="glyph glyph--watch"></span>Watch</span>
+              <span class="u-row"><span class="glyph glyph--warning"></span>Warning</span>
+              <span class="u-row"><span class="glyph glyph--critical"></span>Critical</span>
+            </span>
+            <span class="u-spacer"></span>
+            <a class="sm u-teal" href="alert-queue.html">Queue →</a>
+          </div>
+        </article>
+
+        <!-- Propagation graph -->
+        <article class="panel c6" id="graph">
+          <div class="panel__head">
+            <h2>Propagation map</h2>
+            <span class="chip chip--amber chip--mono">c-9917</span>
+            <div class="panel__tools">
+              <span class="label">Samprāpti</span>
+              <button class="btn btn--ghost btn--sm" type="button">Depth 2</button>
+            </div>
+          </div>
+          <div class="panel__body panel__body--tight">
+            <svg class="graph" viewBox="0 0 600 330" role="img" aria-label="Propagation graph: a weather cell and shared drainage connect track circuits 12T, 14T and 16T. Predicted cascade to 21T within 6 to 11 days.">
+              <defs>
+                <radialGradient id="haloAmber" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stop-color="#F9BE5C" stop-opacity=".18"/>
+                  <stop offset="100%" stop-color="#F9BE5C" stop-opacity="0"/>
+                </radialGradient>
+                <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+                  <path d="M0 0 10 5 0 10z" fill="#3B5768"/>
+                </marker>
+                <marker id="arrowAmber" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+                  <path d="M0 0 10 5 0 10z" fill="#C47F16"/>
+                </marker>
+              </defs>
+
+              <rect class="cluster-box" x="190" y="6" width="352" height="244" rx="10"/>
+              <text class="cluster-label" x="204" y="23">c-9917 · drain cluster</text>
+
+              <path class="e-line e-line--weather" d="M164 53 C 188 53, 190 106, 210 116" marker-end="url(#arrow)"/>
+              <text class="e-label" x="164" y="88">rain 72 h</text>
+              <text class="e-label" x="164" y="98">61 mm</text>
+
+              <path class="e-line e-line--shared" d="M340 116 C 372 116, 372 46, 400 42" marker-end="url(#arrowAmber)"/>
+              <text class="e-label" x="350" y="80">g +31%</text>
+
+              <path class="e-line" d="M340 130 H 400" marker-end="url(#arrow)"/>
+              <text class="e-label" x="348" y="124">ballast</text>
+
+              <path class="e-line e-line--shared" d="M340 142 C 372 142, 372 200, 400 206" marker-end="url(#arrowAmber)"/>
+              <text class="e-label" x="350" y="172">catchment</text>
+
+              <path d="M532 66 C 568 76, 568 92, 532 100" fill="none" stroke="#0DA294" stroke-width="1.3" stroke-dasharray="3 4" marker-end="url(#arrow)"/>
+              <text class="e-label" x="540" y="88">9–14 d</text>
+
+              <g>
+                <rect class="node" x="14" y="26" width="150" height="54" rx="7"/>
+                <text class="n-label" x="26" y="46">Weather cell</text>
+                <text class="n-sub" x="26" y="61">wx-20.30N-85.83E</text>
+                <text class="n-sub" x="26" y="72" fill="#7A93A5">monsoon · drainage load</text>
+              </g>
+
+              <g>
+                <rect class="node node--root" x="210" y="104" width="130" height="58" rx="7"/>
+                <rect x="210" y="104" width="3" height="58" rx="1.5" fill="#F9BE5C"/>
+                <text class="n-label" x="222" y="124">Drain &amp; ballast</text>
+                <text class="n-sub" x="222" y="139">shared root cause</text>
+                <text class="n-sub" x="222" y="151" fill="#F9BE5C">conductance ↑ 12 d</text>
+              </g>
+
+              <circle class="halo" cx="466" cy="42" r="62"/>
+              <g>
+                <rect class="node node--watch" x="400" y="18" width="132" height="48" rx="7"/>
+                <circle cx="416" cy="37" r="3.4" fill="#38E0CE"/>
+                <text class="n-label" x="428" y="36">ADRA/TC/12T</text>
+                <text class="n-sub" x="428" y="50">Down Goods · 420 m</text>
+              </g>
+
+              <g>
+                <rect class="node node--warning" x="400" y="100" width="132" height="48" rx="7"/>
+                <circle cx="416" cy="119" r="3.4" fill="#F9BE5C"/>
+                <text class="n-label" x="428" y="118">ADRA/TC/14T</text>
+                <text class="n-sub" x="428" y="132">Down Goods · 420 m</text>
+              </g>
+
+              <g>
+                <rect class="node node--watch" x="400" y="182" width="132" height="48" rx="7"/>
+                <circle cx="416" cy="201" r="3.4" fill="#38E0CE"/>
+                <text class="n-label" x="428" y="200">ADRA/TC/16T</text>
+                <text class="n-sub" x="428" y="214">Up Goods · 400 m</text>
+              </g>
+
+              <g>
+                <path d="M466 230 V 250" stroke="#22394A" stroke-width="1.2" stroke-dasharray="4 4"/>
+                <rect x="350" y="250" width="196" height="42" rx="6" fill="#0B131C" stroke="#1A2C3A"/>
+                <text class="n-sub" x="362" y="265" fill="#7A93A5">predicted cascade</text>
+                <text class="n-label" x="362" y="282" style="font-size:10px">R-04 Down Goods · 6 trains/peak h</text>
+              </g>
+
+              <g transform="translate(14,306)">
+                <line x1="0" y1="0" x2="16" y2="0" stroke="#2C4557" stroke-width="1.2"/>
+                <text class="e-label" x="21" y="3">dependency</text>
+                <line x1="96" y1="0" x2="112" y2="0" stroke="#C47F16" stroke-width="1.6" stroke-dasharray="4 3"/>
+                <text class="e-label" x="117" y="3">common cause</text>
+                <line x1="212" y1="0" x2="228" y2="0" stroke="#0A7D73" stroke-width="1.4" stroke-dasharray="2 3"/>
+                <text class="e-label" x="233" y="3">weather edge</text>
+              </g>
+            </svg>
+          </div>
+          <div class="panel__foot" style="gap:16px">
+            <span class="u-row" style="gap:5px"><span class="glyph glyph--warning" aria-hidden="true"></span><span><b class="u-hi">6–11 d</b> to 21T</span></span>
+            <span class="u-row" style="gap:5px"><span class="label">root p</span><b class="mono" style="font-size:11px">0.71</b></span>
+            <span class="u-row" style="gap:5px"><span class="label">routes</span><b class="mono" style="font-size:11px">R-04 · R-07</b></span>
+            <span class="u-spacer"></span>
+            <a class="sm u-teal" href="circuit-detail.html">Open 12T →</a>
+          </div>
+        </article>
+
+        <!-- Cluster rail -->
+        <article class="panel c3">
+          <div class="panel__head">
+            <h2>Common cause</h2>
+            <div class="panel__tools"><span class="chip chip--mono">3</span></div>
+          </div>
+          <div class="panel__body panel__body--tight">
+            <div class="stack stack--tight">
+
+              <div class="member" style="flex-direction:column;align-items:stretch;gap:6px;background:var(--ink-800);border-color:var(--amber-line);padding:10px">
+                <div class="u-row u-row--between">
+                  <span class="u-row"><span class="glyph glyph--warning" aria-hidden="true"></span><b class="mono" style="font-size:11px">c-9917</b><span class="chip chip--amber">root cause</span></span>
+                  <span class="mono u-amber" style="font-size:11px">38%</span>
+                </div>
+                <div class="h3" style="font-size:13px">Drainage · Adra yard</div>
+                <div class="u-row" style="gap:5px;flex-wrap:wrap">
+                  <span class="chip chip--mono">12T</span><span class="chip chip--mono">14T</span><span class="chip chip--mono">16T</span>
+                  <span class="xs u-dim" style="margin-left:2px">3 assets · one fix</span>
+                </div>
+                <div class="risk">
+                  <div class="risk__track"><span class="risk__fill risk__fill--warning" style="width:38%"></span></div>
+                  <span class="risk__val u-amber">90 min</span>
+                </div>
+              </div>
+
+              <div class="member">
+                <span class="glyph glyph--warning" aria-hidden="true"></span>
+                <div style="min-width:0">
+                  <div class="u-row" style="gap:6px"><b class="mono" style="font-size:11px">c-9902</b><span class="xs u-dim">supply</span></div>
+                  <div class="xs u-dim u-truncate">IPS/1 · 110 V DC · 2 circuits</div>
+                </div>
+                <span class="member__risk u-amber">33%</span>
+              </div>
+
+              <div class="member">
+                <span class="glyph glyph--watch" aria-hidden="true"></span>
+                <div style="min-width:0">
+                  <div class="u-row" style="gap:6px"><b class="mono" style="font-size:11px">c-9888</b><span class="xs u-dim">cable</span></div>
+                  <div class="xs u-dim u-truncate">Route N2 · insulation 0.9 MΩ</div>
+                </div>
+                <span class="member__risk u-teal">21%</span>
+              </div>
+
+            </div>
+            <div class="divider"></div>
+            <div class="xs u-dim" style="line-height:1.55">Clusters fold duplicate alerts before they reach the queue. c-9917 alone merges 6 alerts into 3 decisions, saving an estimated 2.1 block-hours this week.</div>
+          </div>
+          <div class="panel__foot">
+            <span>SMMS-linked · 11 open</span>
+            <span class="u-spacer"></span>
+            <a class="sm u-teal" href="alert-queue.html">All clusters →</a>
+          </div>
+        </article>
+      </section>
+
+      <!-- ================= Row 2: queue · rolling block ================= -->
+      <section class="grid12 mt5" aria-label="Work queue">
+
+        <article class="panel c8">
+          <div class="panel__head">
+            <h2>Priority queue</h2>
+            <span class="label">risk × consequence</span>
+            <div class="panel__tools">
+              <span class="chip chip--mono">6 of 82</span>
+              <button class="btn btn--ghost btn--sm" type="button">Open queue</button>
+            </div>
+          </div>
+          <div class="panel__body panel__body--flush">
+            <table class="table table--dense">
+              <thead>
+                <tr>
+                  <th style="width:84px">Level</th>
+                  <th>Asset</th>
+                  <th>Likely mode</th>
+                  <th class="u-right" style="width:118px">Risk 72 h</th>
+                  <th class="u-right" style="width:104px">RUL p10–p90</th>
+                  <th style="width:88px">Cluster</th>
+                  <th style="width:118px">Next action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="is-selected">
+                  <td><span class="level level--critical"><span class="glyph glyph--critical" aria-hidden="true"></span>Critical</span></td>
+                  <td><div class="table__asset"><b>ADRA/TC/31T</b><span>Up Loop · 380 m · relay TR31</span></div></td>
+                  <td><span class="chip chip--mono">F7</span> <span class="u-mut">Surge damage</span></td>
+                  <td class="u-right">
+                    <div class="risk"><div class="risk__track"><span class="risk__fill risk__fill--critical" style="width:68%"></span></div><span class="risk__val u-red">68%</span></div>
+                  </td>
+                  <td class="u-right mono" style="font-size:11px">2 d <span class="u-dim">1–4</span></td>
+                  <td><span class="chip chip--mono">c-9902</span></td>
+                  <td><span class="chip chip--red">Special block</span></td>
+                </tr>
+                <tr>
+                  <td><span class="level level--warning"><span class="glyph glyph--warning" aria-hidden="true"></span>Warning</span></td>
+                  <td><div class="table__asset"><b>ADRA/TC/14T</b><span>Down Goods · 420 m · relay TR14</span></div></td>
+                  <td><span class="chip chip--mono">F1</span> <span class="u-mut">Ballast</span></td>
+                  <td class="u-right">
+                    <div class="risk"><div class="risk__track"><span class="risk__fill risk__fill--warning" style="width:38%"></span></div><span class="risk__val u-amber">38%</span></div>
+                  </td>
+                  <td class="u-right mono" style="font-size:11px">14 d <span class="u-dim">7–24</span></td>
+                  <td><span class="chip chip--mono">c-9917</span></td>
+                  <td><span class="chip chip--teal">RB-28 · fits</span></td>
+                </tr>
+                <tr>
+                  <td><span class="level level--warning"><span class="glyph glyph--warning" aria-hidden="true"></span>Warning</span></td>
+                  <td><div class="table__asset"><b>ADRA/TC/21T</b><span>Up Main · 610 m · relay TR21</span></div></td>
+                  <td><span class="chip chip--mono">F6</span> <span class="u-mut">Supply</span></td>
+                  <td class="u-right">
+                    <div class="risk"><div class="risk__track"><span class="risk__fill risk__fill--warning" style="width:33%"></span></div><span class="risk__val u-amber">33%</span></div>
+                  </td>
+                  <td class="u-right mono" style="font-size:11px">18 d <span class="u-dim">9–31</span></td>
+                  <td><span class="chip chip--mono">c-9902</span></td>
+                  <td><span class="chip chip--amber">RB-30 +20 m</span></td>
+                </tr>
+                <tr>
+                  <td><span class="level level--watch"><span class="glyph glyph--watch" aria-hidden="true"></span>Watch</span></td>
+                  <td><div class="table__asset"><b>ADRA/TC/12T</b><span>Down Goods · 420 m · relay TR12</span></div></td>
+                  <td><span class="chip chip--mono">F1</span> <span class="u-mut">Ballast</span></td>
+                  <td class="u-right">
+                    <div class="risk"><div class="risk__track"><span class="risk__fill risk__fill--watch" style="width:11%"></span></div><span class="risk__val">11%</span></div>
+                  </td>
+                  <td class="u-right mono" style="font-size:11px">21 d <span class="u-dim">9–38</span></td>
+                  <td><span class="chip chip--mono">c-9917</span></td>
+                  <td><span class="chip chip--teal">RB-28 · fits</span></td>
+                </tr>
+                <tr>
+                  <td><span class="level level--watch"><span class="glyph glyph--watch" aria-hidden="true"></span>Watch</span></td>
+                  <td><div class="table__asset"><b>ADRA/TC/04T</b><span>Shunt neck · 180 m · relay TR04</span></div></td>
+                  <td><span class="chip chip--mono">F9</span> <span class="u-mut">Shunting</span></td>
+                  <td class="u-right">
+                    <div class="risk"><div class="risk__track"><span class="risk__fill risk__fill--watch" style="width:9%"></span></div><span class="risk__val">9%</span></div>
+                  </td>
+                  <td class="u-right mono" style="font-size:11px">34 d <span class="u-dim">18–52</span></td>
+                  <td><span class="chip chip--mono">c-9888</span></td>
+                  <td><span class="chip">Monitor</span></td>
+                </tr>
+                <tr>
+                  <td><span class="level level--watch"><span class="glyph glyph--watch" aria-hidden="true"></span>Watch</span></td>
+                  <td><div class="table__asset"><b>ADRA/TC/16T</b><span>Up Goods · 400 m · relay TR16</span></div></td>
+                  <td><span class="chip chip--mono">F1</span> <span class="u-mut">Ballast</span></td>
+                  <td class="u-right">
+                    <div class="risk"><div class="risk__track"><span class="risk__fill risk__fill--watch" style="width:8%"></span></div><span class="risk__val">8%</span></div>
+                  </td>
+                  <td class="u-right mono" style="font-size:11px">39 d <span class="u-dim">21–58</span></td>
+                  <td><span class="chip chip--mono">c-9917</span></td>
+                  <td><span class="chip chip--teal">RB-28 · fits</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="panel__foot">
+            <span>Model agreement ≥ 0.72 on 5 of 6</span>
+            <span class="u-spacer"></span>
+            <span class="u-row"><span class="glyph glyph--nominal"></span>2 cleared this shift</span>
+          </div>
+        </article>
+
+        <article class="panel c4">
+          <div class="panel__head">
+            <h2>Rolling Block · week 29</h2>
+            <div class="panel__tools"><span class="label">Upaśaya</span></div>
+          </div>
+          <div class="panel__body">
+            <div class="notice notice--teal" style="margin-bottom:6px">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="7"/><path d="M10 6v4.4l2.8 1.6"/></svg>
+              <span><b>3 jobs fit</b> existing blocks; one needs +20 min. No special block for c-9917.</span>
+            </div>
+
+            <div class="block-row">
+              <div class="block-row__time"><b>16 Jul</b>02:10–03:40</div>
+              <div class="block-row__body"><b>12T · 14T ballast clearing</b><span>Down Goods · cluster c-9917 · 2 assets</span></div>
+              <span class="fit fit--ok">fits 90′</span>
+            </div>
+            <div class="block-row">
+              <div class="block-row__time"><b>18 Jul</b>01:20–02:50</div>
+              <div class="block-row__body"><b>21T · IPS ripple test</b><span>Up Main · supply tap · electrician + SSE</span></div>
+              <span class="fit fit--tight">+20′</span>
+            </div>
+            <div class="block-row">
+              <div class="block-row__time"><b>22 Jul</b>03:00–04:30</div>
+              <div class="block-row__body"><b>31T · surge arrestor swap</b><span>Up Loop · F7 · critical</span></div>
+              <span class="fit fit--ok">fits 90′</span>
+            </div>
+
+            <div class="divider"></div>
+            <div class="meta-row"><dt>Block plan</dt><dd>RB-28 to RB-31 · published 11 Jul</dd></div>
+            <div class="meta-row"><dt>If deferred</dt><dd class="u-amber">Probability of failure before RB-30: 0.41</dd></div>
+
+            <div class="u-row mt4" style="gap:8px">
+              <button class="btn btn--primary" type="button">Draft block request</button>
+              <button class="btn btn--ghost" type="button">Shift crew</button>
+            </div>
+          </div>
+        </article>
+      </section>
+
+    </div>
+  </main>
+</div>
+<script src="../assets/app.js"></script>
+</body>
+</html>
+

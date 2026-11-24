@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NIDAN · Front-end mockups</title>
+<meta name="description" content="NIDAN front-end mockup gallery — predictive failure propagation for Indian Railways track circuits.">
+<link rel="stylesheet" href="../assets/tokens.css">
+<link rel="stylesheet" href="../assets/app.css">
+</head>
+<body style="background:var(--bg-app)">
+<div class="cover">
+
+  <div class="cover__top">
+    <a class="brand" href="index.html" aria-label="NIDAN home" style="width:auto">
+      <span class="brand__stack">
+        <img class="brand__logo" src="../assets/brand/nidan-logo-ui-dark.svg" alt="NIDAN">
+        <span class="brand__deva">निदान</span>
+      </span>
+    </a>
+    <div class="u-row" style="gap:10px">
+      <span class="chip chip--mono">Front-end research + implementation</span>
+      <span class="chip chip--teal chip--advisory">Advisory · non-vital</span>
+      <span class="chip chip--mono">v1.0 · 14 Jul 2026</span>
+    </div>
+  </div>
+
+  <h1 class="cover__title">A diagnostic spine for the <em>railway control room</em>.</h1>
+  <div class="cover__deva">पूर्वरूप से उपशय तक — drift, cause, course, response</div>
+
+  <p class="cover__lede">
+    NIDAN turns track-circuit telemetry into a ranked, explainable hypothesis. These seven screens are the product argument:
+    a Watch alert is not a red badge, it is a named failure mode, a physical explanation, a calibrated remaining life, and a job that fits a published block.
+    Everything here is advisory. There is no write path to interlocking, signals, routes or track circuits.
+  </p>
+
+  <div class="cover__thesis">
+    <div class="thesis">
+      <b>Signal, not dashboard</b>
+      <p>One spine orders the division by consequence. Colour never carries state alone; every shape has a word and a number.</p>
+    </div>
+    <div class="thesis">
+      <b>Explain before you ask</b>
+      <p>Physics, model and precedent sit in one card. The technician sees the falsifier, not just the score.</p>
+    </div>
+    <div class="thesis">
+      <b>Fit the block you already have</b>
+      <p>Rolling Block windows are first-class data. The best intervention is the one that needs no special block.</p>
+    </div>
+  </div>
+
+  <div class="u-row mt6" style="gap:24px;padding:14px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
+    <span class="u-row" style="gap:7px"><span class="label">Surfaces</span><b class="mono" style="font-size:12px">7</b></span>
+    <span class="u-row" style="gap:7px"><span class="label">Demo scope</span><b class="mono" style="font-size:12px">SER / ADRA · 42 stations</b></span>
+    <span class="u-row" style="gap:7px"><span class="label">Assets</span><b class="mono" style="font-size:12px">1,284 track circuits</b></span>
+    <span class="u-spacer"></span>
+    <span class="u-row" style="gap:7px"><span class="label">Build</span><b class="mono" style="font-size:12px">static HTML · no framework</b></span>
+  </div>
+
+  <div class="u-row" style="margin-top:34px;align-items:baseline;gap:10px">
+    <h2 class="h2">Screen index</h2>
+    <span class="xs u-dim">captured at 1600 px desktop · 1024 px field tablet</span>
+    <span class="u-spacer"></span>
+    <a class="sm u-teal" href="../../Frontend-Complete-Research-Implementation.md">Read the implementation spec →</a>
+  </div>
+
+  <div class="gallery">
+
+    <a class="shot" href="command-center.html">
+      <div class="shot__img">
+        <img src="../screenshots/01-command-center.png" alt="Command centre: KPI strip, section spine, propagation map and priority queue." loading="lazy">
+      </div>
+      <div class="shot__meta">
+        <span class="shot__n">01</span>
+        <div>
+          <b>Division command centre</b>
+          <span>Risk × consequence for the next seven days. Signal Spine, propagation map with common-cause cluster c-9917, and a queue that ends in a Rolling Block action.</span>
+        </div>
+      </div>
+    </a>
+
+    <a class="shot" href="circuit-detail.html">
+      <div class="shot__img">
+        <img src="../screenshots/02-circuit-detail.png" alt="Circuit detail: remaining useful life band, three-tab explanation card and asset record." loading="lazy">
+      </div>
+      <div class="shot__meta">
+        <span class="shot__n">02</span>
+        <div>
+          <b>Circuit detail</b>
+          <span>The whole argument for one asset: the four Ayurvedic stages as a diagnostic spine, a conformal RUL band, and Physics / Model / Precedents in one place.</span>
+        </div>
+      </div>
+    </a>
+
+    <a class="shot" href="alert-queue.html">
+      <div class="shot__img">
+        <img src="../screenshots/03-alert-queue.png" alt="Alert queue: filters, bulk actions, dense priority table and a triage panel." loading="lazy">
+      </div>
+      <div class="shot__meta">
+        <span class="shot__n">03</span>
+        <div>
+          <b>Alert queue</b>
+          <span>Triage at shift speed. Saved views, cluster merging, Rolling Block fit per row, and a visible explanation of why each row is ranked where it is.</span>
+        </div>
+      </div>
+    </a>
+
+    <a class="shot" href="field-tablet.html">
+      <div class="shot__img">
+        <img src="../screenshots/04-field-tablet.png" alt="Field tablet: sunlight theme, offline queue, large targets and a three-step confirmation." loading="lazy">
+      </div>
+      <div class="shot__meta">
+        <span class="shot__n">04</span>
+        <div>
+          <b>Field confirmation</b>
+          <span>The same system in a ballast crib: 56 px targets, warm high-contrast light theme, offline queue, bilingual labels and a three-step confirm that becomes an SMMS draft.</span>
+        </div>
+      </div>
+    </a>
+
+    <a class="shot" href="model-health.html">
+      <div class="shot__img">
+        <img src="../screenshots/05-model-health.png" alt="Model health: reliability diagram, calibration by level, registry, drift monitors and promotion gates." loading="lazy">
+      </div>
+      <div class="shot__meta">
+        <span class="shot__n">05</span>
+        <div>
+          <b>Model health &amp; trust</b>
+          <span>Assurance for a non-vital system that still changes decisions. Calibration, conformal coverage, drift, data trust and four gates before a score reaches a supervisor.</span>
+        </div>
+      </div>
+    </a>
+
+    <a class="shot" href="design-system.html">
+      <div class="shot__img">
+        <img src="../screenshots/06-design-system.png" alt="Design system: colour ramp, typography, spacing, state language, components and accessibility." loading="lazy">
+      </div>
+      <div class="shot__meta">
+        <span class="shot__n">06</span>
+        <div>
+          <b>Design system</b>
+          <span>A hundred and twenty-two tokens, an 8-point rhythm, four state shapes, the three signature data patterns, and the bilingual vocabulary reviewed against Indian Railways usage.</span>
+        </div>
+      </div>
+    </a>
+
+  </div>
+
+  <div class="grid12 mt6" style="gap:20px;padding-top:24px;border-top:1px solid var(--border)">
+    <div class="c4">
+      <div class="label" style="margin-bottom:6px">One coherent dataset</div>
+      <p class="sm u-mut" style="line-height:1.6">Every screen uses the same asset set and timestamps: 12T, 14T, 16T in cluster c-9917, with 21T as the predicted cascade. Nothing is lorem ipsum.</p>
+    </div>
+    <div class="c4">
+      <div class="label" style="margin-bottom:6px">Static, inspectable</div>
+      <p class="sm u-mut" style="line-height:1.6">No build step. Tokens in <b class="mono">assets/tokens.css</b>, components in <b class="mono">assets/app.css</b>, shared shell and tabs in <b class="mono">assets/app.js</b>.</p>
+    </div>
+    <div class="c4">
+      <div class="label" style="margin-bottom:6px">Deliberate limits</div>
+      <p class="sm u-mut" style="line-height:1.6">Advisory only. No control affordance is drawn anywhere, not even disabled: the interface cannot suggest a command path that does not exist.</p>
+    </div>
+  </div>
+
+  <div class="cover__foot">
+    <span>NIDAN · Predictive Failure Propagation Engine · front-end mockup set</span>
+    <span>Devanagari: Noto Sans Devanagari · Latin: Inter · Data: JetBrains Mono</span>
+  </div>
+</div>
+</body>
+</html>

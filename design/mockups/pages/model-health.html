@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Model health · NIDAN</title>
+<meta name="description" content="NIDAN model health mockup — calibration, conformal coverage, drift monitors and promotion gates for the predictive twin.">
+<link rel="stylesheet" href="../assets/tokens.css">
+<link rel="stylesheet" href="../assets/app.css">
+</head>
+<body data-page="model" data-scope="CRIS / RDSO / MODEL ASSURANCE" data-role="CRIS–RDSO reviewer">
+<div class="app">
+  <main class="main">
+    <div class="main__inner">
+
+      <header class="page-head">
+        <div>
+          <div class="page-head__eyebrow">
+            <span class="label label--teal">Assurance</span>
+            <span class="chip chip--mono">scoring 14 Jul 05:10</span>
+            <span class="chip chip--teal">shadow · 4 months</span>
+            <span class="chip chip--amber">2 watch items</span>
+          </div>
+          <h1 class="page-head__title">Model health &amp; trust</h1>
+          <p class="page-head__sub">Calibration, coverage and drift for every model that can raise an alert. A model that cannot show its error bars does not reach a shift supervisor.</p>
+        </div>
+        <div class="page-head__actions">
+          <button class="btn" type="button">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 3v9m0 0 3.2-3.2M10 12 6.8 8.8M4 15.5h12"/></svg>
+            Assurance pack
+          </button>
+          <button class="btn btn--primary" type="button">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 4h9l3 3v9H4V4Z"/><path d="M7 4v4h5M7 12h6"/></svg>
+            Record review
+          </button>
+        </div>
+      </header>
+
+      <section class="kpis" aria-label="Model metrics" style="margin-bottom:20px">
+        <article class="kpi kpi--ok">
+          <div class="kpi__label"><span class="glyph glyph--nominal" aria-hidden="true"></span><span class="label">Discrimination</span></div>
+          <div class="kpi__value">0.86 <small>AUC</small></div>
+          <div class="kpi__foot">95% CI 0.83–0.89 · n = 2,410</div>
+        </article>
+        <article class="kpi kpi--ok">
+          <div class="kpi__label"><span class="glyph glyph--nominal" aria-hidden="true"></span><span class="label">Calibration</span></div>
+          <div class="kpi__value">0.041 <small>ECE</small></div>
+          <div class="kpi__foot">target ≤ 0.05 · 10 bins · drift +0.006</div>
+        </article>
+        <article class="kpi kpi--watch">
+          <div class="kpi__label"><span class="glyph glyph--watch" aria-hidden="true"></span><span class="label">Conformal coverage</span></div>
+          <div class="kpi__value">0.897 <small>vs 0.90</small></div>
+          <div class="kpi__foot">RUL p10–p90 · 3,180 holds</div>
+        </article>
+        <article class="kpi kpi--warning">
+          <div class="kpi__label"><span class="glyph glyph--warning" aria-hidden="true"></span><span class="label">Input drift</span></div>
+          <div class="kpi__value">0.18 <small>PSI</small></div>
+          <div class="kpi__foot">rain_72h · watch · monsoon shift</div>
+        </article>
+      </section>
+
+      <div class="grid12">
+
+        <!-- Calibration -->
+        <article class="panel c8">
+          <div class="panel__head">
+            <h2>Reliability diagram</h2>
+            <span class="label">7-day failure probability</span>
+            <div class="panel__tools">
+              <span class="chip chip--mono">ECE 0.041</span>
+              <div class="seg" role="group" aria-label="Cohort">
+                <button type="button" class="is-on">All circuits</button>
+                <button type="button">DC</button>
+                <button type="button">AC</button>
+              </div>
+            </div>
+          </div>
+          <div class="panel__body">
+            <div class="grid12" style="gap:20px;align-items:start">
+              <div class="c7">
+                <div class="calib">
+                  <svg viewBox="0 0 360 168" role="img" aria-label="Reliability diagram: observed failure frequency tracks predicted probability closely, slightly above the ideal line at low probabilities.">
+                    <!-- grid -->
+                    <line class="grid" x1="30" y1="30" x2="330" y2="30"/>
+                    <line class="grid" x1="30" y1="57.5" x2="330" y2="57.5"/>
+                    <line class="grid" x1="30" y1="85" x2="330" y2="85"/>
+                    <line class="grid" x1="30" y1="112.5" x2="330" y2="112.5"/>
+                    <line class="axis" x1="30" y1="140" x2="330" y2="140"/>
+                    <line class="axis" x1="30" y1="30" x2="30" y2="140"/>
+                    <!-- ideal -->
+                    <line class="ideal" x1="30" y1="140" x2="330" y2="30"/>
+                    <!-- observed -->
+                    <path d="M45 135.6 L75 126.8 L105 110.3 L135 103.7 L165 88.3 L195 82.8 L225 65.2 L255 59.7 L285 44.3 L315 37.7"
+                          fill="none" stroke="#38E0CE" stroke-width="1.8" stroke-linejoin="round"/>
+                    <g class="pts">
+                      <circle cx="45" cy="135.6" r="2.6"/><circle cx="75" cy="126.8" r="2.6"/>
+                      <circle cx="105" cy="110.3" r="2.6"/><circle cx="135" cy="103.7" r="2.6"/>
+                      <circle cx="165" cy="88.3" r="2.6"/><circle cx="195" cy="82.8" r="2.6"/>
+                      <circle cx="225" cy="65.2" r="2.6"/><circle cx="255" cy="59.7" r="2.6"/>
+                      <circle cx="285" cy="44.3" r="2.6"/><circle cx="315" cy="37.7" r="2.6"/>
+                    </g>
+                    <!-- band 90% CI around line -->
+                    <path d="M45 139 L75 131 L105 115 L135 108 L165 93 L195 88 L225 70 L255 65 L285 50 L315 43"
+                          fill="none" stroke="#38E0CE" stroke-width="1" stroke-dasharray="3 3" opacity=".35"/>
+                    <!-- labels -->
+                    <text class="lbl" x="30" y="156" text-anchor="middle">0</text>
+                    <text class="lbl" x="105" y="156" text-anchor="middle">25</text>
+                    <text class="lbl" x="180" y="156" text-anchor="middle">50</text>
+                    <text class="lbl" x="255" y="156" text-anchor="middle">75</text>
+                    <text class="lbl" x="330" y="156" text-anchor="middle">100%</text>
+                    <text class="lbl" x="20" y="140" text-anchor="end">0</text>
+                    <text class="lbl" x="20" y="85" text-anchor="end">50</text>
+                    <text class="lbl" x="20" y="30" text-anchor="end">100</text>
+                    <text class="lbl" x="30" y="22">observed failure rate</text>
+                    <text class="lbl" x="330" y="168" text-anchor="end">predicted probability</text>
+                  </svg>
+                </div>
+                <div class="legend mt2">
+                  <span><i style="background:var(--teal-400)"></i>observed</span>
+                  <span><i style="background:var(--ink-400)"></i>ideal</span>
+                  <span><i style="background:var(--teal-700)"></i>90% CI</span>
+                </div>
+              </div>
+              <div class="c5">
+                <div class="factlist">
+                  <div class="factlist__row"><span class="factlist__k">Brier score</span><span class="factlist__v mono">0.083</span></div>
+                  <div class="factlist__row"><span class="factlist__k">Base rate</span><span class="factlist__v mono">6.1% · 7 d</span></div>
+                  <div class="factlist__row"><span class="factlist__k">Alerts / week</span><span class="factlist__v mono">82 · 3 critical</span></div>
+                  <div class="factlist__row"><span class="factlist__k">Precision @ 20</span><span class="factlist__v mono">0.74</span></div>
+                  <div class="factlist__row"><span class="factlist__k">Lead time</span><span class="factlist__v mono">median 11 d</span></div>
+                  <div class="factlist__row"><span class="factlist__k">Evaluated</span><span class="factlist__v">rolling 180 d · 2,410 holds</span></div>
+                </div>
+                <div class="notice notice--teal mt3" style="font-size:var(--fs-xs)">
+                  <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2.5 4 5v5c0 4 2.6 6.6 6 7.5 3.4-.9 6-3.5 6-7.5V5l-6-2.5Z"/><path d="m7.4 10 1.9 2 3.3-3.6"/></svg>
+                  <span>Calibration is measured against confirmed SMMS outcomes only. No-fault-found cases are kept as negatives, not silently dropped.</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="grid12" style="gap:12px">
+              <div class="c4">
+                <div class="u-row u-row--between xs"><span class="u-dim">Brier · 24 h</span><span class="mono">0.041</span></div>
+                <div class="meter mt2" style="height:5px"><div class="meter__fill" style="width:41%"></div></div>
+              </div>
+              <div class="c4">
+                <div class="u-row u-row--between xs"><span class="u-dim">Brier · 72 h</span><span class="mono">0.067</span></div>
+                <div class="meter mt2" style="height:5px"><div class="meter__fill" style="width:67%"></div></div>
+              </div>
+              <div class="c4">
+                <div class="u-row u-row--between xs"><span class="u-dim">Brier · 7 d</span><span class="mono">0.083</span></div>
+                <div class="meter mt2" style="height:5px"><div class="meter__fill" style="width:83%"></div></div>
+              </div>
+            </div>
+            <p class="xs u-dim" style="margin-top:9px">Skill holds across horizons, not just at the 7-day threshold that raises a Watch. The 24-hour score is the noisiest — it is shown, not hidden.</p>
+          </div>
+          <div class="panel__foot">
+            <span class="u-row"><span class="glyph glyph--nominal"></span>Within tolerance</span>
+            <span class="u-spacer"></span>
+            <span>Next recalibration 01 Aug · owner Model assurance</span>
+          </div>
+        </article>
+
+        <!-- Calibration by level -->
+        <article class="panel c4">
+          <div class="panel__head">
+            <h2>Calibration by level</h2>
+            <div class="panel__tools"><span class="chip chip--mono">180 d</span></div>
+          </div>
+          <div class="panel__body">
+            <table class="table table--dense" style="border:1px solid var(--border);border-radius:6px">
+              <thead>
+                <tr><th>Level</th><th class="u-right">Predicted</th><th class="u-right">Observed</th><th class="u-right">n</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><span class="level level--watch"><span class="glyph glyph--watch"></span>Watch</span></td><td class="u-right mono">21%</td><td class="u-right mono">19%</td><td class="u-right mono u-dim">1,204</td></tr>
+                <tr><td><span class="level level--warning"><span class="glyph glyph--warning"></span>Warning</span></td><td class="u-right mono">34%</td><td class="u-right mono">33%</td><td class="u-right mono u-dim">388</td></tr>
+                <tr><td><span class="level level--critical"><span class="glyph glyph--critical"></span>Critical</span></td><td class="u-right mono">56%</td><td class="u-right mono">54%</td><td class="u-right mono u-dim">96</td></tr>
+              </tbody>
+            </table>
+
+            <div class="divider"></div>
+
+            <div class="label" style="margin-bottom:8px">Lead time by level</div>
+            <div class="stack stack--tight">
+              <div>
+                <div class="u-row u-row--between xs"><span class="u-dim">Watch · median</span><span class="mono">11 d</span></div>
+                <div class="meter mt2" style="height:5px"><div class="meter__fill" style="width:79%"></div></div>
+              </div>
+              <div>
+                <div class="u-row u-row--between xs"><span class="u-dim">Warning · median</span><span class="mono u-amber">3.4 d</span></div>
+                <div class="meter mt2" style="height:5px"><div class="meter__fill meter__fill--amber" style="width:34%"></div></div>
+              </div>
+              <div>
+                <div class="u-row u-row--between xs"><span class="u-dim">Critical · median</span><span class="mono u-red">0.9 d</span></div>
+                <div class="meter mt2" style="height:5px"><div class="meter__fill meter__fill--red" style="width:9%"></div></div>
+              </div>
+            </div>
+
+            <div class="notice notice--teal mt4" style="font-size:var(--fs-xs)">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2.5 4 5v5c0 4 2.6 6.6 6 7.5 3.4-.9 6-3.5 6-7.5V5l-6-2.5Z"/><path d="m7.4 10 1.9 2 3.3-3.6"/></svg>
+              <span>The Critical band is 1.8 points conservative. That is deliberate: the cost of a missed wrong-side failure is not symmetric with the cost of an inspection.</span>
+            </div>
+          </div>
+          <div class="panel__foot">
+            <span>Levels are never auto-escalated by the UI</span>
+          </div>
+        </article>
+
+        <!-- Registry -->
+        <article class="panel c12">
+          <div class="panel__head">
+            <h2>Registry</h2>
+            <span class="label">append-only · signed at promotion</span>
+            <div class="panel__tools"><span class="chip chip--mono">5 active</span></div>
+          </div>
+          <div class="panel__body panel__body--tight">
+            <div class="registry" style="grid-template-columns:repeat(5,1fr)">
+
+              <div class="reg-card" style="border-color:var(--teal-line)">
+                <div class="reg-card__top">
+                  <span class="glyph glyph--nominal"></span>
+                  <b style="font-size:12px">Physics twin</b>
+                  <span class="reg-card__ver">0.3.1</span>
+                </div>
+                <div class="reg-card__name">tc-twin · DC track circuit</div>
+                <div class="reg-card__stat"><span>fit error</span><b>2.8%</b></div>
+                <div class="reg-card__stat"><span>last trained</span><b>28 Jun 2026</b></div>
+              </div>
+
+              <div class="reg-card">
+                <div class="reg-card__top">
+                  <span class="glyph glyph--nominal"></span>
+                  <b style="font-size:12px">Failure classifier</b>
+                  <span class="reg-card__ver">0.2.0</span>
+                </div>
+                <div class="reg-card__name">gnb-modes · F1–F12</div>
+                <div class="reg-card__stat"><span>macro F1</span><b>0.81</b></div>
+                <div class="reg-card__stat"><span>coverage</span><b>0.90 nominal</b></div>
+              </div>
+
+              <div class="reg-card">
+                <div class="reg-card__top">
+                  <span class="glyph glyph--nominal"></span>
+                  <b style="font-size:12px">Propagation GNN</b>
+                  <span class="reg-card__ver">0.2.0</span>
+                </div>
+                <div class="reg-card__name">cascade-gnn · dependency graph</div>
+                <div class="reg-card__stat"><span>edge precision</span><b>0.78</b></div>
+                <div class="reg-card__stat"><span>cluster recall</span><b>0.83</b></div>
+              </div>
+
+              <div class="reg-card">
+                <div class="reg-card__top">
+                  <span class="glyph glyph--nominal"></span>
+                  <b style="font-size:12px">Survival</b>
+                  <span class="reg-card__ver">0.2.4</span>
+                </div>
+                <div class="reg-card__name">rul-surv · Weibull + covariates</div>
+                <div class="reg-card__stat"><span>C-index</span><b>0.79</b></div>
+                <div class="reg-card__stat"><span>coverage</span><b>0.897</b></div>
+              </div>
+
+              <div class="reg-card">
+                <div class="reg-card__top">
+                  <span class="glyph glyph--watch"></span>
+                  <b style="font-size:12px">Precedent index</b>
+                  <span class="reg-card__ver">2026.07</span>
+                </div>
+                <div class="reg-card__name">smms-knn · confirmed cases</div>
+                <div class="reg-card__stat"><span>recall @ 3</span><b>0.72</b></div>
+                <div class="reg-card__stat"><span>indexed</span><b>18,402 cases</b></div>
+              </div>
+
+            </div>
+          </div>
+          <div class="panel__foot">
+            <span>Registry is append-only</span>
+            <span class="u-spacer"></span>
+            <span class="mono" style="font-size:10px">audit 4,102 events</span>
+          </div>
+        </article>
+
+        <!-- Performance by mode -->
+        <article class="panel c5">
+          <div class="panel__head">
+            <h2>Performance by failure mode</h2>
+            <div class="panel__tools"><span class="label">180 d</span></div>
+          </div>
+          <div class="panel__body panel__body--flush">
+            <table class="table table--dense">
+              <thead>
+                <tr><th>Mode</th><th class="u-right">AUC</th><th class="u-right">Precision</th><th class="u-right">Recall</th><th class="u-right">n</th><th style="width:74px">Trend</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><span class="chip chip--mono">F1</span> <span class="u-mut">Ballast</span></td><td class="u-right mono">0.88</td><td class="u-right mono">0.81</td><td class="u-right mono">0.76</td><td class="u-right mono u-dim">612</td><td><svg style="width:74px;height:22px" data-points="0.84,0.85,0.86,0.85,0.87,0.88,0.88" data-kind="teal" aria-hidden="true"></svg></td></tr>
+                <tr><td><span class="chip chip--mono">F7</span> <span class="u-mut">Surge</span></td><td class="u-right mono">0.84</td><td class="u-right mono">0.77</td><td class="u-right mono">0.69</td><td class="u-right mono u-dim">188</td><td><svg style="width:74px;height:22px" data-points="0.80,0.82,0.81,0.83,0.84,0.83,0.84" data-kind="teal" aria-hidden="true"></svg></td></tr>
+                <tr><td><span class="chip chip--mono">F8</span> <span class="u-mut">Cable</span></td><td class="u-right mono">0.86</td><td class="u-right mono">0.74</td><td class="u-right mono">0.71</td><td class="u-right mono u-dim">204</td><td><svg style="width:74px;height:22px" data-points="0.85,0.86,0.85,0.86,0.86,0.85,0.86" data-kind="teal" aria-hidden="true"></svg></td></tr>
+                <tr><td><span class="chip chip--mono">F5</span> <span class="u-mut">Relay</span></td><td class="u-right mono">0.81</td><td class="u-right mono">0.72</td><td class="u-right mono">0.64</td><td class="u-right mono u-dim">341</td><td><svg style="width:74px;height:22px" data-points="0.83,0.82,0.82,0.81,0.82,0.81,0.81" data-kind="amber" aria-hidden="true"></svg></td></tr>
+                <tr><td><span class="chip chip--mono">F9</span> <span class="u-mut">Shunting</span></td><td class="u-right mono">0.79</td><td class="u-right mono">0.68</td><td class="u-right mono">0.61</td><td class="u-right mono u-dim">96</td><td><svg style="width:74px;height:22px" data-points="0.81,0.80,0.80,0.79,0.79,0.78,0.79" data-kind="amber" aria-hidden="true"></svg></td></tr>
+                <tr><td><span class="chip chip--mono">F11</span> <span class="u-mut">Config</span></td><td class="u-right mono">0.74</td><td class="u-right mono">0.59</td><td class="u-right mono">0.52</td><td class="u-right mono u-dim">71</td><td><svg style="width:74px;height:22px" data-points="0.76,0.75,0.75,0.74,0.75,0.74,0.74" data-kind="amber" aria-hidden="true"></svg></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="panel__foot">
+            <span class="u-row"><span class="glyph glyph--warning"></span>F9 wrong-side risk is the priority for the next cohort</span>
+          </div>
+        </article>
+
+        <!-- Drift -->
+        <article class="panel c4">
+          <div class="panel__head">
+            <h2>Drift monitors</h2>
+            <div class="panel__tools"><span class="chip chip--amber">1 watch</span></div>
+          </div>
+          <div class="panel__body">
+            <div class="stack stack--tight">
+              <div>
+                <div class="u-row u-row--between xs"><span class="mono">rain_72h</span><span class="mono u-amber">PSI 0.18</span></div>
+                <div class="meter mt2" style="height:5px"><div class="meter__fill meter__fill--amber" style="width:18%"></div></div>
+                <div class="xs u-dim" style="margin-top:3px">monsoon onset · expected seasonal shift</div>
+              </div>
+              <div>
+                <div class="u-row u-row--between xs"><span class="mono">ambient_rh_7d</span><span class="mono">PSI 0.11</span></div>
+                <div class="meter mt2" style="height:5px"><div class="meter__fill" style="width:11%"></div></div>
+                <div class="xs u-dim" style="margin-top:3px">within band · no action</div>
+              </div>
+              <div>
+                <div class="u-row u-row--between xs"><span class="mono">relay_i_slope_7d</span><span class="mono">PSI 0.07</span></div>
+                <div class="meter mt2" style="height:5px"><div class="meter__fill" style="width:7%"></div></div>
+                <div class="xs u-dim" style="margin-top:3px">stable · 42k windows</div>
+              </div>
+              <div>
+                <div class="u-row u-row--between xs"><span class="mono">feed_ripple_p95</span><span class="mono">PSI 0.04</span></div>
+                <div class="meter mt2" style="height:5px"><div class="meter__fill" style="width:4%"></div></div>
+                <div class="xs u-dim" style="margin-top:3px">stable · new IPS/3 online</div>
+              </div>
+              <div>
+                <div class="u-row u-row--between xs"><span class="mono">label_delay_days</span><span class="mono">0.9 d</span></div>
+                <div class="meter mt2" style="height:5px"><div class="meter__fill meter__fill--ok" style="width:9%"></div></div>
+                <div class="xs u-dim" style="margin-top:3px">SMMS closure lag · healthy</div>
+              </div>
+            </div>
+          </div>
+          <div class="panel__foot">
+            <span>Retrain trigger: PSI &gt; 0.25 on two features</span>
+          </div>
+        </article>
+
+        <!-- Data trust -->
+        <article class="panel c3">
+          <div class="panel__head"><h2>Data trust</h2><div class="panel__tools"><span class="label">corpus</span></div></div>
+          <div class="panel__body">
+            <div class="u-row" style="align-items:baseline;gap:6px">
+              <span class="num" style="font-size:28px">0.78</span>
+              <span class="xs u-dim">mean score</span>
+            </div>
+            <div class="meter mt2" style="height:6px"><div class="meter__fill meter__fill--amber" style="width:78%"></div></div>
+            <div class="stack stack--tight mt4">
+              <div class="u-row u-row--between xs"><span class="u-dim">≥ 0.85</span><span class="mono">61%</span></div>
+              <div class="u-row u-row--between xs"><span class="u-dim">0.70–0.84</span><span class="mono">21%</span></div>
+              <div class="u-row u-row--between xs"><span class="u-dim">0.55–0.69</span><span class="mono u-amber">14%</span></div>
+              <div class="u-row u-row--between xs"><span class="u-dim">&lt; 0.55</span><span class="mono u-red">4%</span></div>
+            </div>
+            <div class="notice mt3" style="font-size:var(--fs-xs)">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M10 3 2 16.5h16L10 3Z"/><path d="M10 8v4M10 14.5h.01"/></svg>
+              <span>Low-trust assets are never suppressed. They are shown with the trust score and a reconcile task.</span>
+            </div>
+            <div class="divider"></div>
+            <div class="label" style="margin-bottom:4px">By division</div>
+            <div class="meta-row"><dt>Adra</dt><dd class="mono">0.81</dd></div>
+            <div class="meta-row"><dt>Bankura</dt><dd class="mono">0.76</dd></div>
+            <div class="meta-row"><dt>Kharagpur</dt><dd class="mono u-amber">0.71</dd></div>
+          </div>
+        </article>
+
+        <!-- Promotion gates -->
+        <article class="panel c12">
+          <div class="panel__head">
+            <h2>Promotion gates</h2>
+            <span class="label">a model reaches the queue only through all four</span>
+            <div class="panel__tools"><span class="chip chip--mono">v0.2.0 pipeline</span></div>
+          </div>
+          <div class="panel__body">
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:8px;overflow:hidden">
+              <div style="background:var(--ink-850);padding:13px 14px">
+                <div class="u-row" style="gap:7px"><span class="glyph glyph--nominal"></span><b class="label" style="color:var(--text-mid)">01 · Offline</b></div>
+                <div class="sm u-mut" style="margin-top:7px;line-height:1.5">Temporal split, no leakage. AUC and ECE within declared tolerance on held-out divisions.</div>
+                <div class="xs u-dim" style="margin-top:8px">passed · 12 Jun</div>
+              </div>
+              <div style="background:var(--ink-850);padding:13px 14px">
+                <div class="u-row" style="gap:7px"><span class="glyph glyph--nominal"></span><b class="label" style="color:var(--text-mid)">02 · Shadow</b></div>
+                <div class="sm u-mut" style="margin-top:7px;line-height:1.5">Scores computed but hidden. Pre-registered hypotheses; four months of SMMS outcomes.</div>
+                <div class="xs u-dim" style="margin-top:8px">running · 4 months</div>
+              </div>
+              <div style="background:var(--ink-850);padding:13px 14px">
+                <div class="u-row" style="gap:7px"><span class="glyph glyph--watch"></span><b class="label" style="color:var(--text-mid)">03 · Human</b></div>
+                <div class="sm u-mut" style="margin-top:7px;line-height:1.5">SSE panel reviews 40 sampled alerts for plausibility; dissent is recorded, not averaged away.</div>
+                <div class="xs u-dim" style="margin-top:8px">scheduled · 22 Jul</div>
+              </div>
+              <div style="background:var(--ink-850);padding:13px 14px">
+                <div class="u-row" style="gap:7px"><span class="glyph glyph--muted"></span><b class="label" style="color:var(--text-mid)">04 · Sign-off</b></div>
+                <div class="sm u-mut" style="margin-top:7px;line-height:1.5">RDSO/CRIS reviewer signs the model card and the failure-mode coverage statement.</div>
+                <div class="xs u-dim" style="margin-top:8px">pending · owner CRIS</div>
+              </div>
+            </div>
+
+            <div class="grid12 mt4" style="gap:20px">
+              <div class="c7">
+                <div class="divider" style="margin-top:0"></div>
+                <div class="meta-row"><dt>Rollback</dt><dd>One click to previous signed version · scores recompute within 6 min · no queue change without SSE notice</dd></div>
+                <div class="meta-row"><dt>Model card</dt><dd>Intended use, known failure modes, out-of-scope uses, evaluation population</dd></div>
+                <div class="meta-row"><dt>Audit</dt><dd>Every score carries model version, feature set hash and evaluation timestamp</dd></div>
+              </div>
+              <div class="c5">
+                <div class="notice" style="font-size:var(--fs-xs)">
+                  <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M10 3 2 16.5h16L10 3Z"/><path d="M10 8v4M10 14.5h.01"/></svg>
+                  <span><b>Current label: advisory.</b> No output may be wired to signalling logic. The system holds no write credentials to interlocking or track circuits.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="panel__foot">
+            <span>Model assurance · CRIS–RDSO joint review</span>
+            <span class="u-spacer"></span>
+            <span class="mono" style="font-size:10px">next review 22 Jul 2026</span>
+          </div>
+        </article>
+
+      </div>
+
+    </div>
+  </main>
+</div>
+<script src="../assets/app.js"></script>
+</body>
+</html>
