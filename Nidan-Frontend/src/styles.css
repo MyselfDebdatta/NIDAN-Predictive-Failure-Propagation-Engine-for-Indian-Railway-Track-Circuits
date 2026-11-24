@@ -1,0 +1,261 @@
+@import "tailwindcss" source(none);
+@import "tw-animate-css";
+@import "./styles/fonts.css";
+@import "./styles/tokens.css";
+@source "../src";
+
+/* Short landscape phones: the bottom tab bar moves to the side. */
+@custom-variant landscape-phone (@media (orientation: landscape) and (max-height: 500px));
+
+@theme inline {
+  --color-bg-app: var(--bg-app);
+  --color-bg-chrome: var(--bg-chrome);
+  --color-bg-panel: var(--bg-panel);
+  --color-bg-raised: var(--bg-raised);
+  --color-bg-inset: var(--bg-inset);
+  --color-bg-hover: var(--bg-hover);
+  --color-bg-active: var(--bg-active);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-border-subtle: var(--border-subtle);
+  --color-text-hi: var(--text-hi);
+  --color-text-mid: var(--text-mid);
+  --color-text-lo: var(--text-lo);
+  --color-accent: var(--accent);
+  --color-accent-text: var(--accent-text);
+  --color-accent-wash: var(--accent-wash);
+  --color-warning: var(--warning);
+  --color-warning-wash: var(--warning-wash);
+  --color-critical: var(--critical);
+  --color-critical-wash: var(--critical-wash);
+  --color-ok: var(--ok);
+  --color-neutral: var(--neutral);
+  --color-focus-ring: var(--focus-ring);
+  --color-on-accent: var(--on-accent);
+
+  /* shadcn compatibility names, mapped onto the NIDAN tokens */
+  --color-background: var(--bg-app);
+  --color-foreground: var(--text-hi);
+  --color-popover: var(--bg-panel);
+  --color-popover-foreground: var(--text-hi);
+  --color-card: var(--bg-panel);
+  --color-card-foreground: var(--text-hi);
+  --color-muted: var(--bg-raised);
+  --color-muted-foreground: var(--text-lo);
+  --color-primary: var(--accent-text);
+  --color-primary-foreground: var(--on-accent);
+  --color-secondary: var(--bg-raised);
+  --color-secondary-foreground: var(--text-mid);
+  --color-destructive: var(--critical);
+  --color-destructive-foreground: var(--on-accent);
+  --color-input: var(--border-strong);
+  --color-ring: var(--focus-ring);
+
+  --font-sans: var(--font-ui);
+  --font-display: var(--font-brand-display);
+  --font-mono: var(--font-code);
+  --shadow-panel: var(--shadow-1);
+  --shadow-float: var(--shadow-2);
+  --radius-xs: var(--r-xs);
+  --radius-sm: var(--r-sm);
+  --radius-md: var(--r-md);
+  --radius-lg: var(--r-lg);
+}
+
+@layer base {
+* {
+  box-sizing: border-box;
+  border-color: var(--border);
+}
+
+html,
+body {
+  min-height: 100%;
+  margin: 0;
+  background: var(--bg-app);
+  color: var(--text-hi);
+  font-family: var(--font-ui);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  min-width: 320px;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
+::selection {
+  background: var(--accent-wash);
+  color: var(--text-hi);
+}
+
+}
+
+@layer components {
+[lang="hi"],
+.font-deva {
+  font-family: var(--font-deva);
+  line-height: 1.6;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-data {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.eyebrow {
+  color: var(--text-lo);
+  font-size: var(--fs-xs);
+  font-weight: 650;
+  letter-spacing: 0.085em;
+  line-height: var(--lh-xs);
+  text-transform: uppercase;
+}
+
+.hairline {
+  border-color: var(--border-subtle);
+}
+
+.panel-surface {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-panel);
+  box-shadow: var(--shadow-1);
+}
+
+.number-cell {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.scrollbar-thin {
+  scrollbar-color: var(--border-strong) transparent;
+  scrollbar-width: thin;
+}
+
+.spine-line {
+  background: linear-gradient(to bottom, var(--border-strong) 75%, transparent);
+}
+
+.skeleton {
+  background: var(--bg-raised);
+  border-radius: var(--r-sm);
+}
+
+.fade-in {
+  animation: nidan-fade var(--dur-3) var(--ease-out) both;
+}
+
+.drawer-in {
+  animation: nidan-drawer var(--dur-3) var(--ease-out) both;
+}
+
+@keyframes nidan-fade {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes nidan-drawer {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+}
+
+@layer components {
+/* Field theme: warm paper, white cards, 2px borders, 56px targets. A semantic remap, not a filter. */
+.field-surface {
+  color-scheme: light;
+  --bg-app: oklch(0.9637 0.0071 97.4);
+  --bg-chrome: oklch(1 0 0);
+  --bg-panel: oklch(1 0 0);
+  --bg-raised: oklch(0.9637 0.0071 97.4);
+  --bg-inset: oklch(0.9367 0.0094 100.9);
+  --bg-hover: color-mix(in oklab, oklch(0.2 0.02 225) 5%, transparent);
+  --bg-active: color-mix(in oklab, oklch(0.45 0.08 185) 10%, transparent);
+  --border: oklch(0.8291 0.0076 128.6);
+  --border-strong: oklch(0.6923 0.0118 164.7);
+  --border-subtle: oklch(0.8291 0.0076 128.6);
+  --text-hi: oklch(0.1986 0.0187 228.4);
+  --text-mid: oklch(0.3791 0.0286 232.8);
+  --text-lo: oklch(0.4777 0.0279 225.9);
+  --accent: oklch(0.4572 0.0784 184.9);
+  --accent-text: oklch(0.4572 0.0784 184.9);
+  --accent-wash: color-mix(in oklab, oklch(0.4572 0.0784 184.9) 10%, transparent);
+  --warning: oklch(0.4544 0.0996 68.1);
+  --warning-wash: color-mix(in oklab, oklch(0.6955 0.1281 78.3) 14%, transparent);
+  --critical: oklch(0.4007 0.1484 24.7);
+  --critical-wash: color-mix(in oklab, oklch(0.4007 0.1484 24.7) 8%, transparent);
+  --ok: oklch(0.4572 0.0784 184.9);
+  --neutral: oklch(0.4777 0.0279 225.9);
+  --focus-ring: oklch(0.3613 0.0592 184.6);
+  --on-accent: oklch(1 0 0);
+  --shadow-1: 0 1px 2px color-mix(in oklab, oklch(0.2 0.02 225) 6%, transparent);
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  background: var(--bg-app);
+  color: var(--text-hi);
+  font-size: 16px;
+  line-height: 24px;
+}
+
+}
+
+@media print {
+  [data-shell-chrome] {
+    display: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
