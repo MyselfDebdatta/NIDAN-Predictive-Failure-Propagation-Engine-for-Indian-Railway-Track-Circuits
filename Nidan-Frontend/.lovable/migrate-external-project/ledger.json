@@ -1,0 +1,4 @@
+{"source":"code-archive (previous Lovable project nidan-rail-advisory-main)","capabilities":[
+{"capability":"code","source":"src/ tokens, fixtures, api adapter, primitives, charts","outcome":"migrate","status":"migrated","next_action":"build remaining screens"},
+{"capability":"schema/records/auth","source":"none — front-end only, typed fixtures","outcome":"not applicable","status":"verified-absent","next_action":"none"},
+{"capability":"external providers/webhooks/schedules/secrets","source":"none detected (VITE_DATA_SOURCE/VITE_API_BASE_URL are config, not secrets)","outcome":"not applicable","status":"verified-absent","next_action":"none"}]}

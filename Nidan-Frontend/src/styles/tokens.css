@@ -1,0 +1,101 @@
+:root,
+[data-theme="night"] {
+  color-scheme: dark;
+  --bg-app: oklch(0.15070 0.01670 246.58);
+  --bg-chrome: oklch(0.16483 0.01854 248.55);
+  --bg-panel: oklch(0.20455 0.02488 249.13);
+  --bg-raised: oklch(0.23688 0.03027 245.41);
+  --bg-inset: oklch(0.18828 0.02877 253.67);
+  --bg-hover: color-mix(in oklab, var(--text-hi) 3.5%, transparent);
+  --bg-active: color-mix(in oklab, var(--accent) 9%, transparent);
+  --border: oklch(0.28427 0.03511 242.86);
+  --border-strong: oklch(0.36851 0.04572 244.63);
+  --border-subtle: color-mix(in oklab, var(--text-hi) 6%, transparent);
+  --text-hi: oklch(0.96931 0.01003 238.51);
+  --text-mid: oklch(0.78964 0.03221 237.68);
+  --text-lo: oklch(0.65016 0.03913 239.51);
+  --accent: oklch(0.82020 0.13421 184.08);
+  --accent-text: oklch(0.89073 0.11044 184.67);
+  --accent-wash: color-mix(in oklab, var(--accent) 10%, transparent);
+  --warning: oklch(0.83685 0.13291 77.84);
+  --warning-wash: color-mix(in oklab, var(--warning) 10%, transparent);
+  --critical: oklch(0.71255 0.18075 20.87);
+  --critical-wash: color-mix(in oklab, var(--critical) 10%, transparent);
+  --ok: oklch(0.75863 0.13157 167.65);
+  --neutral: oklch(0.65016 0.03913 239.51);
+  --focus-ring: oklch(0.89073 0.11044 184.67);
+  --on-accent: oklch(0.15070 0.01670 246.58);
+  --shadow-1: 0 1px 2px color-mix(in oklab, var(--bg-app) 55%, transparent);
+  --shadow-2: 0 8px 24px -12px color-mix(in oklab, var(--bg-app) 82%, transparent);
+}
+
+[data-theme="day"] {
+  color-scheme: light;
+  --bg-app: oklch(0.98340 0.00417 236.50);
+  --bg-chrome: oklch(1 0 0);
+  --bg-panel: oklch(1 0 0);
+  --bg-raised: oklch(0.97097 0.00586 239.82);
+  --bg-inset: oklch(0.95851 0.00759 241.66);
+  --bg-hover: color-mix(in oklab, oklch(0.26405 0.06783 255.34) 4%, transparent);
+  --bg-active: color-mix(in oklab, oklch(0.47614 0.08088 185.68) 8%, transparent);
+  /* Border steps follow the brand sheet: 1.6:1 and 2.6:1 on white, so field
+     boundaries stay visible without becoming heavy rules. */
+  --border: oklch(0.84115 0.00883 128.58);
+  --border-strong: oklch(0.70703 0.01173 167.65);
+  --border-subtle: color-mix(in oklab, oklch(0.26405 0.06783 255.34) 8%, transparent);
+  --text-hi: oklch(0.26405 0.06783 255.34);
+  --text-mid: oklch(0.37913 0.02855 232.81);
+  --text-lo: oklch(0.54205 0.04398 247.49);
+  --accent: oklch(0.58643 0.10007 186.91);
+  --accent-text: oklch(0.47614 0.08088 185.68);
+  --accent-wash: color-mix(in oklab, var(--accent) 9%, transparent);
+  --warning: oklch(0.45437 0.09963 68.13);
+  --warning-wash: color-mix(in oklab, oklch(0.69554 0.12812 78.27) 12%, transparent);
+  --critical: oklch(0.50214 0.18003 24.61);
+  --critical-wash: color-mix(in oklab, var(--critical) 8%, transparent);
+  --ok: oklch(0.51494 0.10553 164.11);
+  --neutral: oklch(0.54205 0.04398 247.49);
+  --focus-ring: oklch(0.47614 0.08088 185.68);
+  --on-accent: oklch(1 0 0);
+  --shadow-1: 0 1px 2px color-mix(in oklab, oklch(0.26405 0.06783 255.34) 6%, transparent);
+  --shadow-2: 0 12px 32px -18px color-mix(in oklab, oklch(0.26405 0.06783 255.34) 30%, transparent);
+}
+
+:root {
+  --font-ui: "Inter", "Segoe UI", system-ui, sans-serif;
+  --font-brand-display: "Archivo", "Inter", sans-serif;
+  --font-deva: "Noto Sans Devanagari", "Nirmala UI", sans-serif;
+  --font-code: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  --fs-display: 34px;
+  --lh-display: 38px;
+  --fs-h1: 25px;
+  --lh-h1: 31px;
+  --fs-h2: 18px;
+  --lh-h2: 24px;
+  --fs-h3: 14.5px;
+  --lh-h3: 20px;
+  --fs-body: 13.5px;
+  --lh-body: 20px;
+  --fs-sm: 12px;
+  --lh-sm: 17px;
+  --fs-xs: 11px;
+  --lh-xs: 15px;
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 20px;
+  --s6: 24px;
+  --s7: 32px;
+  --s8: 40px;
+  --s9: 48px;
+  --r-xs: 3px;
+  --r-sm: 5px;
+  --r-md: 8px;
+  --r-lg: 12px;
+  --dur-1: 90ms;
+  --dur-2: 140ms;
+  --dur-3: 200ms;
+  --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --max-content: 1560px;
+}
