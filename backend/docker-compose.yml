@@ -1,0 +1,64 @@
+name: nidan-backend
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: nidan-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-nidan}
+      POSTGRES_USER: ${POSTGRES_USER:-nidan}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nidan_dev_password}
+      TZ: Asia/Kolkata
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - nidan_pgdata:/var/lib/postgresql/data
+      - ./db/0001_init.sql:/docker-entrypoint-initdb.d/01_init.sql:ro
+      - ./db/seed.sql:/docker-entrypoint-initdb.d/02_seed.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-nidan} -d ${POSTGRES_DB:-nidan}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  redis:
+    image: redis:7-alpine
+    container_name: nidan-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - nidan_redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nidan-api
+    profiles: ["full"]
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-nidan}:${POSTGRES_PASSWORD:-nidan_dev_password}@postgres:5432/${POSTGRES_DB:-nidan}
+      REDIS_URL: redis://redis:6379/0
+      APP_ENV: ${APP_ENV:-development}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:5173}
+      NIDAN_DATA_MODE: postgres
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  nidan_pgdata:
+  nidan_redisdata:
