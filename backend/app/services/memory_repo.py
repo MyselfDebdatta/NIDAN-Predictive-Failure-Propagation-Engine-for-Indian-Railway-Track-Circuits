@@ -3,12 +3,20 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
+import uuid
 from pathlib import Path
 from typing import Any
 
 from app.middleware import ApiProblemException
 from app.models.common import ModelVersions, utc_now_iso
+
+
+def compute_params_hash(params: dict[str, Any] | None) -> str:
+    """Return deterministic SHA-256 hex digest of canonical model_run params."""
+    canonical = json.dumps(params or {}, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
 class MemoryRepository:
@@ -33,6 +41,9 @@ class MemoryRepository:
         self._kpi_base: dict[str, Any] = copy.deepcopy(raw["kpiFixture"])
         self._smms_ids: list[str] = list(raw.get("searchIndex", {}).get("smms", []))
         self._observations_by_key: dict[str, dict[str, Any]] = {}
+        self._telemetry_seen: set[tuple[str, str, str]] = set()
+        self._model_runs_by_key: dict[tuple[str, str, str], dict[str, Any]] = {}
+        self._snapshots_by_as_of: dict[str, str] = {}
         self._draft_counter = 2048
         self._work_orders: list[dict[str, Any]] = []
         self._audit_log: list[dict[str, Any]] = []
@@ -51,7 +62,14 @@ class MemoryRepository:
                 return item
         return None
 
-    async def acknowledge_alert(self, alert_id: str) -> dict[str, Any] | None:
+    async def acknowledge_alert(
+        self,
+        alert_id: str,
+        *,
+        actor_sub: str | None = None,
+        actor_role: str | None = None,
+        request_id: str | None = None,
+    ) -> dict[str, Any] | None:
         for alert in self._alerts:
             if alert["id"] == alert_id or alert["assetId"] == alert_id:
                 alert["acknowledged"] = True
@@ -60,6 +78,9 @@ class MemoryRepository:
                         "action": "alert.acknowledged",
                         "entityType": "alert",
                         "entityId": alert["id"],
+                        "actorSub": actor_sub,
+                        "actorRole": actor_role,
+                        "requestId": request_id,
                         "at": utc_now_iso(),
                     }
                 )
@@ -73,7 +94,14 @@ class MemoryRepository:
         return None
 
     async def defer_alert(
-        self, alert_id: str, *, reason: str, review_date: str
+        self,
+        alert_id: str,
+        *,
+        reason: str,
+        review_date: str,
+        actor_sub: str | None = None,
+        actor_role: str | None = None,
+        request_id: str | None = None,
     ) -> dict[str, Any] | None:
         for alert in self._alerts:
             if alert["id"] == alert_id or alert["assetId"] == alert_id:
@@ -85,6 +113,9 @@ class MemoryRepository:
                         "entityType": "alert",
                         "entityId": alert["id"],
                         "after": deferral,
+                        "actorSub": actor_sub,
+                        "actorRole": actor_role,
+                        "requestId": request_id,
                         "at": utc_now_iso(),
                     }
                 )
@@ -128,7 +159,15 @@ class MemoryRepository:
             cluster["alertsFolded"] = len(members)
         return clusters
 
-    async def merge_cluster(self, cluster_id: str, alert_ids: list[str]) -> dict[str, Any] | None:
+    async def merge_cluster(
+        self,
+        cluster_id: str,
+        alert_ids: list[str],
+        *,
+        actor_sub: str | None = None,
+        actor_role: str | None = None,
+        request_id: str | None = None,
+    ) -> dict[str, Any] | None:
         target = next((c for c in self._clusters if c["id"] == cluster_id), None)
         if target is None:
             return None
@@ -144,6 +183,18 @@ class MemoryRepository:
                 detail="None of the supplied alertIds exist.",
                 error_type="urn:nidan:not-found",
             )
+        self._audit_log.append(
+            {
+                "action": "cluster.merged",
+                "entityType": "cluster",
+                "entityId": cluster_id,
+                "after": {"mergedAlertIds": merged},
+                "actorSub": actor_sub,
+                "actorRole": actor_role,
+                "requestId": request_id,
+                "at": utc_now_iso(),
+            }
+        )
         clusters = await self.get_clusters()
         updated = next(c for c in clusters if c["id"] == cluster_id)
         return {
@@ -162,7 +213,13 @@ class MemoryRepository:
         }
 
     async def submit_observation(
-        self, *, idempotency_key: str, payload: dict[str, Any]
+        self,
+        *,
+        idempotency_key: str,
+        payload: dict[str, Any],
+        actor_sub: str | None = None,
+        actor_role: str | None = None,
+        request_id: str | None = None,
     ) -> tuple[dict[str, Any], bool]:
         existing = self._observations_by_key.get(idempotency_key)
         comparable = {
@@ -212,6 +269,9 @@ class MemoryRepository:
                 "action": "field.observation.submitted",
                 "entityType": "field_task",
                 "entityId": task["id"],
+                "actorSub": actor_sub,
+                "actorRole": actor_role,
+                "requestId": request_id,
                 "at": utc_now_iso(),
             }
         )
@@ -223,27 +283,46 @@ class MemoryRepository:
         data["generatedAt"] = utc_now_iso()
         return data
 
-    async def get_kpi_summary(self) -> dict[str, Any]:
-        open_alerts = [a for a in self._alerts if not a.get("deferral")]
-        critical = sum(1 for a in self._alerts if a["level"] == "critical")
-        warning = sum(1 for a in self._alerts if a["level"] == "warning")
-        watch = sum(1 for a in self._alerts if a["level"] == "watch")
+    async def get_kpi_summary(self, *, divisions: list[str] | None = None) -> dict[str, Any]:
+        alerts = self._alerts
+        if divisions is not None and "*" not in divisions:
+            allowed = set(divisions)
+            alerts = [a for a in alerts if a.get("division") in allowed]
+
+        critical = sum(1 for a in alerts if a["level"] == "critical")
+        warning = sum(1 for a in alerts if a["level"] == "warning")
+        watch = sum(1 for a in alerts if a["level"] == "watch")
+        ages = sorted(a["ageMinutes"] / 60.0 for a in alerts)
+        median_age = round(ages[len(ages) // 2], 1) if ages else 0.0
+        fits_or_extends = sum(
+            1 for a in alerts if a.get("block") and a["block"]["fit"] in ("fits", "extends")
+        )
+        block_fit_ratio = round(fits_or_extends / len(alerts), 2) if alerts else 0.0
+
         summary = copy.deepcopy(self._kpi_base)
-        summary["openAlerts"]["value"] = len(self._alerts)
+        summary["openAlerts"]["value"] = len(alerts)
         summary["criticalShift"]["value"] = critical
+        summary["blockFit"]["value"] = block_fit_ratio
         summary["queue"] = {
-            "open": len(open_alerts) + (len(self._alerts) - len(open_alerts)),
+            "open": len(alerts),
             "critical": critical,
             "warning": warning,
             "watch": watch,
-            "medianAgeHours": self._kpi_base["queue"]["medianAgeHours"],
+            "medianAgeHours": median_age,
         }
         summary["modelVersions"] = self._model_versions()
         summary["generatedAt"] = utc_now_iso()
         return summary
 
     async def create_work_order_draft(
-        self, *, alert_id: str, action: str, block_id: str
+        self,
+        *,
+        alert_id: str,
+        action: str,
+        block_id: str,
+        actor_sub: str | None = None,
+        actor_role: str | None = None,
+        request_id: str | None = None,
     ) -> dict[str, Any] | None:
         alert = next(
             (a for a in self._alerts if a["id"] == alert_id or a["assetId"] == alert_id),
@@ -269,6 +348,9 @@ class MemoryRepository:
                 "action": "work_order.drafted",
                 "entityType": "work_order_draft",
                 "entityId": draft_id,
+                "actorSub": actor_sub,
+                "actorRole": actor_role,
+                "requestId": request_id,
                 "at": utc_now_iso(),
             }
         )
@@ -325,3 +407,130 @@ class MemoryRepository:
                     }
                 )
         return hits[:20]
+
+    async def ingest_telemetry(self, samples: list[dict[str, Any]]) -> dict[str, int]:
+        accepted = 0
+        deduplicated = 0
+        for sample in samples:
+            asset_id = str(sample["assetId"])
+            if asset_id not in self._asset_records:
+                raise ApiProblemException(
+                    status=404,
+                    title="Asset not found",
+                    detail=f"Unknown track-circuit asset '{asset_id}'.",
+                    error_type="urn:nidan:not-found",
+                )
+            obs_at = sample["observedAt"]
+            obs_key = obs_at.isoformat() if hasattr(obs_at, "isoformat") else str(obs_at)
+            dedup_key = (asset_id, str(sample["signalKey"]), obs_key)
+            if dedup_key in self._telemetry_seen:
+                deduplicated += 1
+                continue
+            self._telemetry_seen.add(dedup_key)
+            accepted += 1
+            for series in self._signals_by_asset.get(asset_id, []):
+                if series["key"] == sample["signalKey"]:
+                    series["values"].append(float(sample["value"]))
+                    if len(series["values"]) > 60:
+                        series["values"] = series["values"][-60:]
+                    break
+        return {"accepted": accepted, "deduplicated": deduplicated}
+
+    async def publish_model_run(self, payload: dict[str, Any]) -> dict[str, Any]:
+        snap_as_of = str(payload.get("snapshotAsOf", ""))
+        code_version = str(payload.get("codeVersion", "unknown"))
+        params_hash = compute_params_hash(payload.get("params"))
+        snapshot_id = self._snapshots_by_as_of.setdefault(snap_as_of, str(uuid.uuid4()))
+
+        idem_key = (snapshot_id, code_version, params_hash)
+        existing = self._model_runs_by_key.get(idem_key)
+        if existing is not None:
+            return {
+                **existing,
+                "assessments_written": 0,
+                "alerts_updated": 0,
+                "idempotent_replay": True,
+            }
+
+        assessments = payload.get("assessments", [])
+        updated_asset_ids: list[str] = []
+        clusters_updated: list[str] = []
+
+        for cl in payload.get("clusters", []) or []:
+            cid = cl["id"]
+            existing_cl = next((c for c in self._clusters if c["id"] == cid), None)
+            if existing_cl is None:
+                self._clusters.append(
+                    {
+                        "id": cid,
+                        "title": cl["title"],
+                        "state": cl.get("state", "open"),
+                        "summary": cl["summary"],
+                        "weatherCell": cl.get("weatherCell", ""),
+                        "savedBlockHours": cl.get("savedBlockHours", 0.0),
+                        "sharedEdges": cl.get("sharedEdges", []),
+                        "decisions": cl.get("decisions", []),
+                        "members": [],
+                        "alertsFolded": 0,
+                    }
+                )
+            else:
+                existing_cl["title"] = cl["title"]
+                existing_cl["state"] = cl.get("state", existing_cl["state"])
+                existing_cl["summary"] = cl["summary"]
+            clusters_updated.append(cid)
+
+        for ra in assessments:
+            asset_id = str(ra.get("assetId") or ra.get("asset_id") or "")
+            if asset_id not in self._asset_records:
+                raise ApiProblemException(
+                    status=404,
+                    title="Asset not found",
+                    detail=f"Model run references unknown asset '{asset_id}'.",
+                    error_type="urn:nidan:not-found",
+                )
+            existing_alert = next((a for a in self._alerts if a["assetId"] == asset_id), None)
+            if existing_alert is not None:
+                existing_alert["level"] = ra["level"]
+                existing_alert["policyRank"] = ra["policyRank"]
+                existing_alert["persistence"] = ra.get("persistence", existing_alert["persistence"])
+                existing_alert["risk"] = {
+                    "h24": ra["h24"],
+                    "h72": ra["h72"],
+                    "h7d": ra["h7d"],
+                    "eceZone": ra["eceZone"],
+                }
+                existing_alert["rul"] = {
+                    "p10Days": ra["p10Days"],
+                    "medianDays": ra["medianDays"],
+                    "p90Days": ra["p90Days"],
+                    "coverage": ra["rulCoverage"],
+                    "heldOutN": ra.get("heldOutN", 0),
+                }
+                existing_alert["likelyModes"] = ra["likelyModes"]
+                existing_alert["modeProbability"] = ra["modeProbability"]
+                existing_alert["modeSetCoverage"] = ra["modeSetCoverage"]
+                existing_alert["dataTrust"] = {
+                    "score": ra["dataTrustScore"],
+                    "flags": ra.get("dataTrustFlags", []),
+                }
+                if ra.get("clusterId"):
+                    existing_alert["clusterId"] = ra["clusterId"]
+                    if ra["clusterId"] not in clusters_updated:
+                        clusters_updated.append(ra["clusterId"])
+            updated_asset_ids.append(asset_id)
+
+        if payload.get("modelHealth"):
+            self._model_health = copy.deepcopy(payload["modelHealth"])
+
+        record = {
+            "model_run_id": str(uuid.uuid4()),
+            "snapshot_id": snapshot_id,
+            "assessments_written": len(updated_asset_ids),
+            "alerts_updated": len(updated_asset_ids),
+            "updated_asset_ids": updated_asset_ids,
+            "clusters_updated": clusters_updated,
+            "idempotent_replay": False,
+        }
+        self._model_runs_by_key[idem_key] = copy.deepcopy(record)
+        return record

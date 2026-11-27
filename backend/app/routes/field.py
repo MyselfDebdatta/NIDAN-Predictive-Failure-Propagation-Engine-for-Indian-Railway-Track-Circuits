@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Header, Response
+from fastapi import APIRouter, Depends, Header, Request, Response
 
 from app.auth import NidanPrincipal, get_current_principal, require_maintainer_or_above
-from app.middleware import ApiProblemException
+from app.middleware import ApiProblemException, get_trace_id
 from app.models.field import (
     FieldObservationReceipt,
     FieldObservationRequest,
@@ -46,8 +46,9 @@ async def get_field_tasks(
 )
 async def submit_observation(
     body: FieldObservationRequest,
+    request: Request,
     response: Response,
-    _principal: Annotated[NidanPrincipal, Depends(require_maintainer_or_above)],
+    principal: Annotated[NidanPrincipal, Depends(require_maintainer_or_above)],
     service: Annotated[FieldService, Depends(get_field_service)],
     idempotency_key: Annotated[str | None, Header(alias="idempotency-key")] = None,
 ):
@@ -71,4 +72,7 @@ async def submit_observation(
     return await service.submit_observation(
         idempotency_key=resolved_key,
         payload=body.model_dump(by_alias=True),
+        actor_sub=principal.sub,
+        actor_role=principal.role,
+        request_id=get_trace_id(request),
     )

@@ -4,9 +4,10 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, Request, Response
 
 from app.auth import NidanPrincipal, require_operator_or_above
+from app.middleware import get_trace_id
 from app.models.summary import WorkOrderDraftRequest, WorkOrderDraftResponse
 from app.routes.deps import get_alert_service, get_summary_service
 from app.services import AlertService, SummaryService
@@ -21,6 +22,7 @@ router = APIRouter(prefix="/v1/work-orders", tags=["work-orders"])
 )
 async def draft_work_order(
     body: WorkOrderDraftRequest,
+    request: Request,
     response: Response,
     principal: Annotated[NidanPrincipal, Depends(require_operator_or_above)],
     alert_service: Annotated[AlertService, Depends(get_alert_service)],
@@ -34,4 +36,7 @@ async def draft_work_order(
         alert_id=body.alert_id,
         action=body.action,
         block_id=body.block_id,
+        actor_sub=principal.sub,
+        actor_role=principal.role,
+        request_id=get_trace_id(request),
     )

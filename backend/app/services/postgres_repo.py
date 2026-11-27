@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 import json
+import uuid
+from datetime import datetime
 from typing import Any
 
 import asyncpg
 
 from app.middleware import ApiProblemException
 from app.models.common import ModelVersions, utc_now_iso
+from app.services.memory_repo import compute_params_hash
 
 
 def _json_val(val: Any) -> Any:
@@ -160,44 +163,58 @@ class PostgresRepository:
             alert_dict["generatedAt"] = utc_now_iso()
             return alert_dict
 
-    async def acknowledge_alert(self, alert_id: str) -> dict[str, Any] | None:
-        async with self.pool.acquire() as conn:
-            async with conn.transaction():
-                row = await conn.fetchrow(
-                    "select id, status::text as status from alert "
-                    "where id = $1 or asset_id = $1 limit 1",
-                    alert_id,
-                )
-                if row is None:
-                    return None
-                resolved_id = row["id"]
-                await conn.execute(
-                    "update alert set status = 'acknowledged'::alert_status where id = $1",
-                    resolved_id,
-                )
-                await conn.execute(
-                    "insert into alert_event (alert_id, kind, payload) "
-                    "values ($1, 'acknowledged', $2::jsonb)",
-                    resolved_id,
-                    json.dumps({"previousStatus": row["status"]}),
-                )
-                await conn.execute(
-                    "insert into audit_log (action, entity_type, entity_id, before, after) "
-                    "values ('alert.acknowledged', 'alert', $1, $2::jsonb, $3::jsonb)",
-                    resolved_id,
-                    json.dumps({"status": row["status"]}),
-                    json.dumps({"status": "acknowledged"}),
-                )
-                return {
-                    "acknowledged": True,
-                    "alertId": resolved_id,
-                    "status": "acknowledged",
-                    "modelVersions": self._model_versions(),
-                    "generatedAt": utc_now_iso(),
-                }
+    async def _resolve_actor_id(
+        self, conn: asyncpg.Connection, actor_sub: str | None
+    ) -> str | None:
+        if not actor_sub:
+            return None
+        try:
+            parsed = str(uuid.UUID(actor_sub))
+        except ValueError:
+            return None
+        exists = await conn.fetchval("select id from app_user where id = $1", parsed)
+        return str(exists) if exists else None
 
-    async def defer_alert(
-        self, alert_id: str, *, reason: str, review_date: str
+    async def _insert_audit_log(
+        self,
+        conn: asyncpg.Connection,
+        *,
+        action: str,
+        entity_type: str,
+        entity_id: str,
+        before: dict[str, Any] | None = None,
+        after: dict[str, Any] | None = None,
+        actor_sub: str | None = None,
+        actor_role: str | None = None,
+        request_id: str | None = None,
+    ) -> None:
+        actor_id = await self._resolve_actor_id(conn, actor_sub)
+        enriched_after = dict(after or {})
+        if actor_sub:
+            enriched_after.setdefault("actorSub", actor_sub)
+        await conn.execute(
+            """
+            insert into audit_log
+              (actor_id, actor_role, action, entity_type, entity_id, before, after, request_id)
+            values ($1, $2::user_role, $3, $4, $5, $6::jsonb, $7::jsonb, $8)
+            """,
+            actor_id,
+            actor_role,
+            action,
+            entity_type,
+            entity_id,
+            json.dumps(before) if before is not None else None,
+            json.dumps(enriched_after) if enriched_after else None,
+            request_id,
+        )
+
+    async def acknowledge_alert(
+        self,
+        alert_id: str,
+        *,
+        actor_sub: str | None = None,
+        actor_role: str | None = None,
+        request_id: str | None = None,
     ) -> dict[str, Any] | None:
         async with self.pool.acquire() as conn:
             async with conn.transaction():
@@ -209,6 +226,61 @@ class PostgresRepository:
                 if row is None:
                     return None
                 resolved_id = row["id"]
+                actor_id = await self._resolve_actor_id(conn, actor_sub)
+                await conn.execute(
+                    "update alert set status = 'acknowledged'::alert_status where id = $1",
+                    resolved_id,
+                )
+                ev_payload: dict[str, Any] = {"previousStatus": row["status"]}
+                if actor_sub:
+                    ev_payload["actorSub"] = actor_sub
+                await conn.execute(
+                    "insert into alert_event (alert_id, kind, actor_id, payload) "
+                    "values ($1, 'acknowledged', $2, $3::jsonb)",
+                    resolved_id,
+                    actor_id,
+                    json.dumps(ev_payload),
+                )
+                await self._insert_audit_log(
+                    conn,
+                    action="alert.acknowledged",
+                    entity_type="alert",
+                    entity_id=resolved_id,
+                    before={"status": row["status"]},
+                    after={"status": "acknowledged"},
+                    actor_sub=actor_sub,
+                    actor_role=actor_role,
+                    request_id=request_id,
+                )
+                return {
+                    "acknowledged": True,
+                    "alertId": resolved_id,
+                    "status": "acknowledged",
+                    "modelVersions": self._model_versions(),
+                    "generatedAt": utc_now_iso(),
+                }
+
+    async def defer_alert(
+        self,
+        alert_id: str,
+        *,
+        reason: str,
+        review_date: str,
+        actor_sub: str | None = None,
+        actor_role: str | None = None,
+        request_id: str | None = None,
+    ) -> dict[str, Any] | None:
+        async with self.pool.acquire() as conn:
+            async with conn.transaction():
+                row = await conn.fetchrow(
+                    "select id, status::text as status from alert "
+                    "where id = $1 or asset_id = $1 limit 1",
+                    alert_id,
+                )
+                if row is None:
+                    return None
+                resolved_id = row["id"]
+                actor_id = await self._resolve_actor_id(conn, actor_sub)
                 clean_reason = reason.strip()
                 await conn.execute(
                     "update alert set status = 'deferred'::alert_status, "
@@ -218,18 +290,26 @@ class PostgresRepository:
                     review_date,
                 )
                 deferral = {"reason": clean_reason, "reviewDate": review_date}
+                ev_payload = dict(deferral)
+                if actor_sub:
+                    ev_payload["actorSub"] = actor_sub
                 await conn.execute(
-                    "insert into alert_event (alert_id, kind, payload) "
-                    "values ($1, 'deferred', $2::jsonb)",
+                    "insert into alert_event (alert_id, kind, actor_id, payload) "
+                    "values ($1, 'deferred', $2, $3::jsonb)",
                     resolved_id,
-                    json.dumps(deferral),
+                    actor_id,
+                    json.dumps(ev_payload),
                 )
-                await conn.execute(
-                    "insert into audit_log (action, entity_type, entity_id, before, after) "
-                    "values ('alert.deferred', 'alert', $1, $2::jsonb, $3::jsonb)",
-                    resolved_id,
-                    json.dumps({"status": row["status"]}),
-                    json.dumps({"status": "deferred", **deferral}),
+                await self._insert_audit_log(
+                    conn,
+                    action="alert.deferred",
+                    entity_type="alert",
+                    entity_id=resolved_id,
+                    before={"status": row["status"]},
+                    after={"status": "deferred", **deferral},
+                    actor_sub=actor_sub,
+                    actor_role=actor_role,
+                    request_id=request_id,
                 )
                 return {
                     "deferred": True,
@@ -420,7 +500,15 @@ class PostgresRepository:
                 clusters.append(item)
             return clusters
 
-    async def merge_cluster(self, cluster_id: str, alert_ids: list[str]) -> dict[str, Any] | None:
+    async def merge_cluster(
+        self,
+        cluster_id: str,
+        alert_ids: list[str],
+        *,
+        actor_sub: str | None = None,
+        actor_role: str | None = None,
+        request_id: str | None = None,
+    ) -> dict[str, Any] | None:
         async with self.pool.acquire() as conn:
             async with conn.transaction():
                 exists = await conn.fetchval("select 1 from cluster where id = $1", cluster_id)
@@ -440,11 +528,15 @@ class PostgresRepository:
                         detail="None of the supplied alertIds exist.",
                         error_type="urn:nidan:not-found",
                     )
-                await conn.execute(
-                    "insert into audit_log (action, entity_type, entity_id, after) "
-                    "values ('cluster.merged', 'cluster', $1, $2::jsonb)",
-                    cluster_id,
-                    json.dumps({"mergedAlertIds": merged}),
+                await self._insert_audit_log(
+                    conn,
+                    action="cluster.merged",
+                    entity_type="cluster",
+                    entity_id=cluster_id,
+                    after={"mergedAlertIds": merged},
+                    actor_sub=actor_sub,
+                    actor_role=actor_role,
+                    request_id=request_id,
                 )
         clusters = await self.get_clusters()
         updated = next(c for c in clusters if c["id"] == cluster_id)
@@ -519,7 +611,13 @@ class PostgresRepository:
             }
 
     async def submit_observation(
-        self, *, idempotency_key: str, payload: dict[str, Any]
+        self,
+        *,
+        idempotency_key: str,
+        payload: dict[str, Any],
+        actor_sub: str | None = None,
+        actor_role: str | None = None,
+        request_id: str | None = None,
     ) -> tuple[dict[str, Any], bool]:
         comparable = {
             "taskId": payload["taskId"],
@@ -590,11 +688,15 @@ class PostgresRepository:
                     "update field_task set status = 'submitted'::task_status where id = $1",
                     task["id"],
                 )
-                await conn.execute(
-                    "insert into audit_log (action, entity_type, entity_id, after) "
-                    "values ('field.observation.submitted', 'field_task', $1, $2::jsonb)",
-                    task["id"],
-                    json.dumps({"idempotencyKey": idempotency_key, "finding": payload["finding"]}),
+                await self._insert_audit_log(
+                    conn,
+                    action="field.observation.submitted",
+                    entity_type="field_task",
+                    entity_id=task["id"],
+                    after={"idempotencyKey": idempotency_key, "finding": payload["finding"]},
+                    actor_sub=actor_sub,
+                    actor_role=actor_role,
+                    request_id=request_id,
                 )
                 return {
                     "queued": True,
@@ -621,8 +723,11 @@ class PostgresRepository:
             data["generatedAt"] = utc_now_iso()
             return data
 
-    async def get_kpi_summary(self) -> dict[str, Any]:
+    async def get_kpi_summary(self, *, divisions: list[str] | None = None) -> dict[str, Any]:
         alerts = await self.list_alerts()
+        if divisions is not None and "*" not in divisions:
+            allowed = set(divisions)
+            alerts = [a for a in alerts if a.get("division") in allowed]
         critical = sum(1 for a in alerts if a["level"] == "critical")
         warning = sum(1 for a in alerts if a["level"] == "warning")
         watch = sum(1 for a in alerts if a["level"] == "watch")
@@ -649,7 +754,14 @@ class PostgresRepository:
         }
 
     async def create_work_order_draft(
-        self, *, alert_id: str, action: str, block_id: str
+        self,
+        *,
+        alert_id: str,
+        action: str,
+        block_id: str,
+        actor_sub: str | None = None,
+        actor_role: str | None = None,
+        request_id: str | None = None,
     ) -> dict[str, Any] | None:
         async with self.pool.acquire() as conn:
             async with conn.transaction():
@@ -663,19 +775,26 @@ class PostgresRepository:
                     "select id from block_window where id = $1",
                     block_id,
                 )
+                actor_id = await self._resolve_actor_id(conn, actor_sub)
                 draft_uuid = await conn.fetchval(
-                    "insert into work_order_draft (alert_id, action, block_window_id, status) "
-                    "values ($1, $2, $3, 'draft'::work_order_status) returning id",
+                    "insert into work_order_draft "
+                    "(alert_id, action, block_window_id, status, created_by) "
+                    "values ($1, $2, $3, 'draft'::work_order_status, $4) returning id",
                     resolved_id,
                     action,
                     bw_id,
+                    actor_id,
                 )
                 draft_id = f"SMMS-draft-{str(draft_uuid)[:8]}"
-                await conn.execute(
-                    "insert into audit_log (action, entity_type, entity_id, after) "
-                    "values ('work_order.drafted', 'work_order_draft', $1, $2::jsonb)",
-                    draft_id,
-                    json.dumps({"alertId": resolved_id, "blockId": block_id}),
+                await self._insert_audit_log(
+                    conn,
+                    action="work_order.drafted",
+                    entity_type="work_order_draft",
+                    entity_id=draft_id,
+                    after={"alertId": resolved_id, "blockId": block_id},
+                    actor_sub=actor_sub,
+                    actor_role=actor_role,
+                    request_id=request_id,
                 )
                 return {
                     "id": draft_id,
@@ -754,43 +873,138 @@ class PostgresRepository:
                 )
         return hits[:20]
 
-    async def publish_model_run(self, payload: dict[str, Any]) -> dict[str, Any]:
-        """Atomically write model_run + snapshot + risk_assessment rows and advance alerts.
-
-        Returns IDs and counts for the caller to emit invalidation events.
-        """
-        import uuid as _uuid
-        from datetime import datetime as _dt
+    async def ingest_telemetry(self, samples: list[dict[str, Any]]) -> dict[str, int]:
+        """Persist QC-annotated telemetry samples idempotently by (asset, signal, observed_at)."""
 
         def _as_dt(val: Any) -> Any:
             if isinstance(val, str):
-                return _dt.fromisoformat(val.replace("Z", "+00:00"))
+                return datetime.fromisoformat(val.replace("Z", "+00:00"))
             return val
 
+        accepted = 0
+        deduplicated = 0
         try:
             async with self.pool.acquire() as conn:
                 async with conn.transaction():
-                    model_run_id = str(_uuid.uuid4())
+                    for s in samples:
+                        inserted = await conn.fetchval(
+                            """
+                            insert into telemetry_reading
+                              (asset_id, signal_key, observed_at, value, quality, source)
+                            values ($1, $2, $3, $4, $5, $6)
+                            on conflict (asset_id, signal_key, observed_at) do nothing
+                            returning 1
+                            """,
+                            s["assetId"],
+                            s["signalKey"],
+                            _as_dt(s["observedAt"]),
+                            s["value"],
+                            int(s.get("quality", 0)),
+                            s.get("source", "logger"),
+                        )
+                        if inserted:
+                            accepted += 1
+                        else:
+                            deduplicated += 1
+        except asyncpg.exceptions.ForeignKeyViolationError as exc:
+            raise ApiProblemException(
+                status=404,
+                title="Unknown asset or signal key",
+                detail=f"Telemetry sample references unknown asset or signal: {exc}",
+                error_type="urn:nidan:not-found",
+            ) from exc
+        return {"accepted": accepted, "deduplicated": deduplicated}
+
+    async def _has_phase3_model_run_columns(self, conn: asyncpg.Connection) -> bool:
+        count = await conn.fetchval(
+            """
+            select count(*) from information_schema.columns
+            where table_name = 'model_run'
+              and column_name in ('snapshot_id', 'params_hash', 'dataset_hash', 'error_detail')
+            """
+        )
+        return int(count or 0) == 4
+
+    async def _record_failed_model_run(
+        self,
+        *,
+        snapshot_id: str | None,
+        code_version: str,
+        params: dict[str, Any],
+        params_hash: str,
+        dataset_hash: str | None,
+        input_watermark: Any,
+        error_detail: str,
+    ) -> None:
+        try:
+            async with self.pool.acquire() as conn:
+                has_v2 = await self._has_phase3_model_run_columns(conn)
+                if has_v2:
                     await conn.execute(
                         """
-                        insert into model_run (id, started_at, finished_at, input_watermark,
-                                              code_version, params, status)
-                        values ($1, now(), now(), $2, $3, '{}'::jsonb, 'succeeded')
+                        insert into model_run
+                          (id, started_at, finished_at, input_watermark, code_version, params,
+                           status, snapshot_id, params_hash, dataset_hash, error_detail)
+                        values ($1, now(), now(), $2, $3, $4::jsonb, 'failed', $5, $6, $7, $8)
                         """,
-                        model_run_id,
-                        _as_dt(payload.get("inputWatermark")),
-                        payload.get("codeVersion", "unknown"),
+                        str(uuid.uuid4()),
+                        input_watermark,
+                        code_version,
+                        json.dumps(params),
+                        snapshot_id,
+                        params_hash,
+                        dataset_hash,
+                        error_detail[:500],
                     )
+                else:
+                    await conn.execute(
+                        """
+                        insert into model_run
+                          (id, started_at, finished_at, input_watermark,
+                           code_version, params, status)
+                        values ($1, now(), now(), $2, $3, $4::jsonb, 'failed')
+                        """,
+                        str(uuid.uuid4()),
+                        input_watermark,
+                        code_version,
+                        json.dumps({**params, "errorDetail": error_detail[:500]}),
+                    )
+        except Exception:  # pragma: no cover - best-effort audit on failure
+            pass
 
-                    snapshot_id = str(_uuid.uuid4())
-                    snapshot_as_of = _as_dt(payload.get("snapshotAsOf"))
+    async def publish_model_run(self, payload: dict[str, Any]) -> dict[str, Any]:
+        """Atomically write model_run + snapshot + clusters + risk_assessments and advance alerts.
+
+        Enforces idempotency on (snapshot_id, code_version, params_hash) when migration 0002
+        is applied, and fails closed with a failed model_run row on policy/FK errors.
+        """
+
+        def _as_dt(val: Any) -> Any:
+            if isinstance(val, str):
+                return datetime.fromisoformat(val.replace("Z", "+00:00"))
+            return val
+
+        code_version = str(payload.get("codeVersion", "unknown"))
+        params = payload.get("params") or {}
+        params_hash = compute_params_hash(params)
+        dataset_hash = payload.get("datasetHash")
+        input_watermark = _as_dt(payload.get("inputWatermark"))
+        snapshot_as_of = _as_dt(payload.get("snapshotAsOf"))
+        resolved_snapshot_id: str | None = None
+
+        try:
+            async with self.pool.acquire() as conn:
+                has_v2 = await self._has_phase3_model_run_columns(conn)
+                async with conn.transaction():
+                    # 1. Resolve or insert snapshot first so idempotency key includes snapshot_id
+                    candidate_snap_id = str(uuid.uuid4())
                     await conn.execute(
                         """
                         insert into snapshot (id, as_of, week, label)
                         values ($1, $2, $3, $4)
                         on conflict (as_of) do nothing
                         """,
-                        snapshot_id,
+                        candidate_snap_id,
                         snapshot_as_of,
                         payload.get("snapshotWeek", 1),
                         payload.get("snapshotLabel", ""),
@@ -799,17 +1013,109 @@ class PostgresRepository:
                         "select id from snapshot where as_of = $1",
                         snapshot_as_of,
                     )
-                    if real_snapshot_id:
-                        snapshot_id = str(real_snapshot_id)
+                    snapshot_id = str(real_snapshot_id or candidate_snap_id)
+                    resolved_snapshot_id = snapshot_id
+
+                    # 2. Check idempotency on (snapshot_id, code_version, params_hash)
+                    if has_v2:
+                        existing_run_id = await conn.fetchval(
+                            """
+                            select id from model_run
+                            where snapshot_id = $1
+                              and code_version = $2
+                              and params_hash = $3
+                              and status = 'succeeded'
+                            limit 1
+                            """,
+                            snapshot_id,
+                            code_version,
+                            params_hash,
+                        )
+                        if existing_run_id is not None:
+                            return {
+                                "model_run_id": str(existing_run_id),
+                                "snapshot_id": snapshot_id,
+                                "assessments_written": 0,
+                                "alerts_updated": 0,
+                                "updated_asset_ids": [],
+                                "clusters_updated": [],
+                                "idempotent_replay": True,
+                            }
+
+                    # 3. Insert model_run row
+                    model_run_id = str(uuid.uuid4())
+                    if has_v2:
+                        await conn.execute(
+                            """
+                            insert into model_run
+                              (id, started_at, finished_at, input_watermark, code_version,
+                               params, status, snapshot_id, params_hash, dataset_hash)
+                            values ($1, now(), now(), $2, $3, $4::jsonb, 'succeeded', $5, $6, $7)
+                            """,
+                            model_run_id,
+                            input_watermark,
+                            code_version,
+                            json.dumps(params),
+                            snapshot_id,
+                            params_hash,
+                            dataset_hash,
+                        )
+                    else:
+                        await conn.execute(
+                            """
+                            insert into model_run
+                              (id, started_at, finished_at, input_watermark,
+                               code_version, params, status)
+                            values ($1, now(), now(), $2, $3, $4::jsonb, 'succeeded')
+                            """,
+                            model_run_id,
+                            input_watermark,
+                            code_version,
+                            json.dumps(params),
+                        )
 
                     updated_asset_ids: list[str] = []
                     clusters_updated: set[str] = set()
 
+                    # 4. Upsert any common-cause clusters produced by GNN
+                    for cl in payload.get("clusters", []) or []:
+                        await conn.execute(
+                            """
+                            insert into cluster (
+                              id, title, state, summary, weather_cell_id, saved_block_hours,
+                              predicted_cascade_asset, cascade_min_days, cascade_max_days,
+                              shared_edges, decisions
+                            ) values (
+                              $1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, $11::jsonb
+                            )
+                            on conflict (id) do update set
+                              title = excluded.title,
+                              state = excluded.state,
+                              summary = excluded.summary,
+                              saved_block_hours = excluded.saved_block_hours,
+                              shared_edges = excluded.shared_edges,
+                              decisions = excluded.decisions
+                            """,
+                            cl["id"],
+                            cl["title"],
+                            cl.get("state", "open"),
+                            cl["summary"],
+                            cl.get("weatherCell") or None,
+                            cl.get("savedBlockHours", 0),
+                            cl.get("predictedCascadeAsset"),
+                            cl.get("cascadeMinDays"),
+                            cl.get("cascadeMaxDays"),
+                            json.dumps(cl.get("sharedEdges", [])),
+                            json.dumps(cl.get("decisions", [])),
+                        )
+                        clusters_updated.add(cl["id"])
+
+                    # 5. Insert risk_assessment rows and advance/open alerts
                     for ra in payload.get("assessments", []):
                         asset_id = ra.get("assetId") or ra.get("asset_id")
                         if not asset_id:
                             continue
-                        ra_id_val = str(_uuid.uuid4())
+                        ra_id_val = str(uuid.uuid4())
                         await conn.execute(
                             """
                             insert into risk_assessment (
@@ -865,22 +1171,68 @@ class PostgresRepository:
                             _as_dt(ra.get("computedAt")),
                         )
 
+                        cluster_id_for_ra = ra.get("clusterId")
                         alert_row = await conn.fetchrow(
                             "select id, cluster_id from alert "
-                            "where asset_id = $1 and status = 'open' limit 1",
+                            "where asset_id = $1 and status in ('open', 'acknowledged') "
+                            "order by opened_at desc limit 1",
                             asset_id,
                         )
                         if alert_row:
                             await conn.execute(
-                                "update alert set current_assessment_id = $1 where id = $2",
+                                "update alert set current_assessment_id = $1, "
+                                "cluster_id = coalesce($2, cluster_id) where id = $3",
                                 ra_id_val,
+                                cluster_id_for_ra,
                                 alert_row["id"],
                             )
-                            if alert_row["cluster_id"]:
-                                clusters_updated.add(alert_row["cluster_id"])
+                            eff_cluster = cluster_id_for_ra or alert_row["cluster_id"]
+                            if eff_cluster:
+                                clusters_updated.add(eff_cluster)
+                        else:
+                            new_alert_id = f"alr-{uuid.uuid4().hex[:8]}"
+                            await conn.execute(
+                                """
+                                insert into alert
+                                  (id, asset_id, cluster_id, opened_at, status,
+                                   current_assessment_id)
+                                values ($1, $2, $3, coalesce($4, now()), 'open', $5)
+                                """,
+                                new_alert_id,
+                                asset_id,
+                                cluster_id_for_ra,
+                                snapshot_as_of,
+                                ra_id_val,
+                            )
+                            await conn.execute(
+                                "insert into alert_event (alert_id, kind, payload) "
+                                "values ($1, 'opened', $2::jsonb)",
+                                new_alert_id,
+                                json.dumps({"modelRunId": model_run_id, "level": ra["level"]}),
+                            )
+                            if cluster_id_for_ra:
+                                clusters_updated.add(cluster_id_for_ra)
 
                         updated_asset_ids.append(asset_id)
+
+                    # 6. Optionally record model_health_snapshot materialisation
+                    if payload.get("modelHealth"):
+                        await conn.execute(
+                            "insert into model_health_snapshot (as_of, payload) "
+                            "values ($1, $2::jsonb)",
+                            snapshot_as_of,
+                            json.dumps(payload["modelHealth"]),
+                        )
         except asyncpg.exceptions.CheckViolationError as exc:
+            await self._record_failed_model_run(
+                snapshot_id=resolved_snapshot_id,
+                code_version=code_version,
+                params=params,
+                params_hash=params_hash,
+                dataset_hash=dataset_hash,
+                input_watermark=input_watermark,
+                error_detail=str(exc),
+            )
             raise ApiProblemException(
                 status=422,
                 title="Policy rule violation",
@@ -888,10 +1240,19 @@ class PostgresRepository:
                 error_type="urn:nidan:policy-violation",
             ) from exc
         except asyncpg.exceptions.ForeignKeyViolationError as exc:
+            await self._record_failed_model_run(
+                snapshot_id=resolved_snapshot_id,
+                code_version=code_version,
+                params=params,
+                params_hash=params_hash,
+                dataset_hash=dataset_hash,
+                input_watermark=input_watermark,
+                error_detail=str(exc),
+            )
             raise ApiProblemException(
                 status=404,
                 title="Referenced entity not found",
-                detail=f"Model run references unknown asset or block: {exc}",
+                detail=f"Model run references unknown asset, cluster, or block: {exc}",
                 error_type="urn:nidan:not-found",
             ) from exc
 
@@ -902,6 +1263,7 @@ class PostgresRepository:
             "alerts_updated": len(updated_asset_ids),
             "updated_asset_ids": updated_asset_ids,
             "clusters_updated": list(clusters_updated),
+            "idempotent_replay": False,
         }
 
 

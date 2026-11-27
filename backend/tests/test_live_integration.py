@@ -389,3 +389,106 @@ async def test_postgres_repo_publish_model_run(pg_pool: asyncpg.Pool) -> None:
     )
     assert result["assessments_written"] == 1
     assert asset_id in result["updated_asset_ids"]
+
+
+@pytest.mark.integration
+async def test_postgres_repo_ingest_telemetry_deduplication(pg_pool: asyncpg.Pool) -> None:
+    """PostgresRepository.ingest_telemetry persists QC readings and deduplicates replays."""
+    from datetime import UTC, datetime
+
+    from app.services.postgres_repo import PostgresRepository
+
+    repo = PostgresRepository(pg_pool)
+    asset_id = await pg_pool.fetchval("select id from asset limit 1")
+    if not asset_id:
+        pytest.skip("No asset rows in test database.")
+
+    ts = datetime(2026, 11, 27, 14, 0, 0, tzinfo=UTC)
+    samples = [
+        {
+            "assetId": asset_id,
+            "signalKey": "relay_i",
+            "observedAt": ts,
+            "value": 122.5,
+            "quality": 0,
+            "source": "integration-test",
+        }
+    ]
+    first = await repo.ingest_telemetry(samples)
+    assert first == {"accepted": 1, "deduplicated": 0}
+
+    second = await repo.ingest_telemetry(samples)
+    assert second == {"accepted": 0, "deduplicated": 1}
+
+
+@pytest.mark.integration
+async def test_postgres_repo_model_run_idempotency_and_fail_closed(pg_pool: asyncpg.Pool) -> None:
+    """Model-run replay is idempotent on (snapshot_id, code_version, params_hash)."""
+    from datetime import UTC, datetime
+
+    from app.middleware import ApiProblemException
+    from app.services.postgres_repo import PostgresRepository
+
+    repo = PostgresRepository(pg_pool)
+    asset_id = await pg_pool.fetchval("select asset_id from alert where status = 'open' limit 1")
+    if not asset_id:
+        pytest.skip("No open alerts in test database.")
+
+    ts = datetime(2026, 11, 27, 15, 30, 0, tzinfo=UTC)
+    payload = {
+        "snapshotAsOf": ts,
+        "snapshotWeek": 48,
+        "snapshotLabel": "27 Nov 2026 · 21:00 IST",
+        "codeVersion": "phase3-idem-0.3.0",
+        "params": {"alpha": 0.1},
+        "inputWatermark": ts,
+        "assessments": [
+            {
+                "assetId": asset_id,
+                "level": "watch",
+                "policyRank": 2,
+                "persistence": 2,
+                "h24": 0.05,
+                "h72": 0.14,
+                "h7d": 0.25,
+                "eceZone": 0.04,
+                "p10Days": 8,
+                "medianDays": 15,
+                "p90Days": 26,
+                "rulCoverage": 0.9,
+                "heldOutN": 3180,
+                "likelyModes": ["F1"],
+                "modeProbability": 0.72,
+                "modeSetCoverage": 0.91,
+                "dataTrustScore": 0.97,
+                "computedAt": ts,
+            }
+        ],
+    }
+
+    first = await repo.publish_model_run(payload)
+    assert first["idempotent_replay"] is False
+    assert first["assessments_written"] == 1
+
+    replay = await repo.publish_model_run(payload)
+    assert replay["idempotent_replay"] is True
+    assert replay["assessments_written"] == 0
+    assert replay["model_run_id"] == first["model_run_id"]
+
+    # Violating critical_rule must fail closed (422) and insert failed model_run
+    bad_ts = datetime(2026, 11, 27, 16, 0, 0, tzinfo=UTC)
+    bad_payload = {
+        **payload,
+        "snapshotAsOf": bad_ts,
+        "codeVersion": "phase3-fail-0.3.0",
+        "assessments": [{**payload["assessments"][0], "level": "critical", "h24": 0.2}],
+    }
+    with pytest.raises(ApiProblemException) as exc_info:
+        await repo.publish_model_run(bad_payload)
+    assert exc_info.value.status == 422
+
+    failed_count = await pg_pool.fetchval(
+        "select count(*) from model_run "
+        "where code_version = 'phase3-fail-0.3.0' and status = 'failed'"
+    )
+    assert failed_count >= 1

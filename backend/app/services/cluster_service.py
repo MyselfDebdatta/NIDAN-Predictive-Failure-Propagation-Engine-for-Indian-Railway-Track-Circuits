@@ -19,8 +19,22 @@ class ClusterService:
     async def list_clusters(self) -> list[dict[str, Any]]:
         return await self.repo.get_clusters()
 
-    async def merge_cluster(self, cluster_id: str, alert_ids: list[str]) -> dict[str, Any]:
-        result = await self.repo.merge_cluster(cluster_id, alert_ids)
+    async def merge_cluster(
+        self,
+        cluster_id: str,
+        alert_ids: list[str],
+        *,
+        actor_sub: str | None = None,
+        actor_role: str | None = None,
+        request_id: str | None = None,
+    ) -> dict[str, Any]:
+        result = await self.repo.merge_cluster(
+            cluster_id,
+            alert_ids,
+            actor_sub=actor_sub,
+            actor_role=actor_role,
+            request_id=request_id,
+        )
         if result is None:
             raise ApiProblemException(
                 status=404,

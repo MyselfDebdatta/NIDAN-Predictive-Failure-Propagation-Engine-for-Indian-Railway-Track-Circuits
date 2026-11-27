@@ -11,6 +11,7 @@ from fastapi.responses import Response as FRResponse
 
 from app.auth import NidanPrincipal, get_current_principal, require_operator_or_above
 from app.cache import RedisCache, check_etag, make_etag
+from app.middleware import get_trace_id
 from app.models.alerts import (
     AcknowledgeResponse,
     Alert,
@@ -36,12 +37,7 @@ async def list_alerts(
     ] = None,
     limit: Annotated[int, Query(ge=1, le=200, description="Max results to return")] = 200,
 ) -> list[Alert] | FRResponse:
-    """Return the ranked advisory alert queue ordered by server policyRank.
-
-    Supports optional cursor pagination via ``?cursor=<policyRank>&limit=<n>``
-    and ``ETag`` / ``If-None-Match`` conditional requests (304 Not Modified).
-    Results are scoped to the caller's authorized divisions.
-    """
+    """Return the ranked advisory alert queue ordered by server policyRank."""
     response.headers["Cache-Control"] = "private, max-age=15"
     response.headers["X-NIDAN-Generated-At"] = utc_now_iso()
     response.headers["X-NIDAN-Model-Versions"] = json.dumps(
@@ -79,6 +75,7 @@ async def _ack_get_not_used() -> None:  # pragma: no cover
 )
 async def acknowledge_alert(
     alert_id: str,
+    request: Request,
     response: Response,
     principal: Annotated[NidanPrincipal, Depends(require_operator_or_above)],
     service: Annotated[AlertService, Depends(get_alert_service)],
@@ -89,7 +86,12 @@ async def acknowledge_alert(
     decoded_id = unquote(alert_id)
     existing = await service.get_alert(decoded_id)
     principal.assert_division(existing.get("division"))
-    result = await service.acknowledge_alert(decoded_id)
+    result = await service.acknowledge_alert(
+        decoded_id,
+        actor_sub=principal.sub,
+        actor_role=principal.role,
+        request_id=get_trace_id(request),
+    )
     await cache.invalidate_prefixes("alerts:", "summary:")
     return result  # type: ignore[return-value]
 
@@ -102,6 +104,7 @@ async def acknowledge_alert(
 async def defer_alert(
     alert_id: str,
     body: DeferRequest,
+    request: Request,
     response: Response,
     principal: Annotated[NidanPrincipal, Depends(require_operator_or_above)],
     service: Annotated[AlertService, Depends(get_alert_service)],
@@ -116,6 +119,9 @@ async def defer_alert(
         decoded_id,
         reason=body.reason,
         review_date=body.review_date,
+        actor_sub=principal.sub,
+        actor_role=principal.role,
+        request_id=get_trace_id(request),
     )
     await cache.invalidate_prefixes("alerts:", "summary:")
     return result  # type: ignore[return-value]

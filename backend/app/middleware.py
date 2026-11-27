@@ -25,6 +25,39 @@ VITAL_CONTROL_PATTERNS = (
     "/track-circuits/",
 )
 
+# Per-process fallback rate-limit buckets keyed by (client_ip, minute_bucket)
+_local_rate_buckets: dict[tuple[str, int], int] = {}
+
+
+async def _check_rate_limit(request: Request, limit_per_min: int) -> int | None:
+    """Return Retry-After seconds if caller exceeded rate limit, else None."""
+    if limit_per_min <= 0 or request.url.path in ("/healthz", "/metrics"):
+        return None
+    client_ip = request.client.host if request.client else "unknown"
+    now_s = int(time.time())
+    minute_bucket = now_s // 60
+    retry_after = max(1, 60 - (now_s % 60))
+
+    db = getattr(request.app.state, "db", None)
+    redis_client = getattr(db, "redis", None) if db is not None else None
+    if redis_client is not None:
+        key = f"nidan:ratelimit:{client_ip}:{minute_bucket}"
+        try:
+            count = await redis_client.incr(key)
+            if count == 1:
+                await redis_client.expire(key, 65)
+            return retry_after if int(count) > limit_per_min else None
+        except Exception as exc:  # pragma: no cover
+            logger.debug("Redis rate-limit fallback (%s)", exc)
+
+    # Bounded in-memory fallback when Redis is absent
+    if len(_local_rate_buckets) > 4096:
+        _local_rate_buckets.clear()
+    bucket_key = (client_ip, minute_bucket)
+    current = _local_rate_buckets.get(bucket_key, 0) + 1
+    _local_rate_buckets[bucket_key] = current
+    return retry_after if current > limit_per_min else None
+
 
 class ApiProblemException(Exception):
     """Domain error serialized as RFC 9457 Problem Details."""
@@ -110,6 +143,21 @@ def register_middleware_and_handlers(app: FastAPI) -> None:
                 error_type="urn:nidan:advisory-only",
                 retryable=False,
             )
+
+        settings = getattr(request.app.state, "settings", None)
+        limit_per_min = getattr(settings, "rate_limit_per_min", 0)
+        retry_after = await _check_rate_limit(request, limit_per_min)
+        if retry_after is not None:
+            resp = problem_json_response(
+                request,
+                status=429,
+                title="Rate limit exceeded",
+                detail=f"Exceeded {limit_per_min} requests/minute. Retry after {retry_after}s.",
+                error_type="urn:nidan:rate-limited",
+                retryable=True,
+            )
+            resp.headers["Retry-After"] = str(retry_after)
+            return resp
 
         start = time.perf_counter()
         response = await call_next(request)
