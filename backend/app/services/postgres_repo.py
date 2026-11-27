@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import uuid
 from datetime import datetime
 from typing import Any
@@ -940,6 +941,12 @@ class PostgresRepository:
             async with self.pool.acquire() as conn:
                 has_v2 = await self._has_phase3_model_run_columns(conn)
                 if has_v2:
+                    persisted_snapshot_id = None
+                    if snapshot_id is not None:
+                        persisted_snapshot_id = await conn.fetchval(
+                            "select id from snapshot where id = $1",
+                            snapshot_id,
+                        )
                     await conn.execute(
                         """
                         insert into model_run
@@ -951,7 +958,7 @@ class PostgresRepository:
                         input_watermark,
                         code_version,
                         json.dumps(params),
-                        snapshot_id,
+                        persisted_snapshot_id,
                         params_hash,
                         dataset_hash,
                         error_detail[:500],
@@ -969,8 +976,10 @@ class PostgresRepository:
                         code_version,
                         json.dumps({**params, "errorDetail": error_detail[:500]}),
                     )
-        except Exception:  # pragma: no cover - best-effort audit on failure
-            pass
+        except Exception as rec_exc:  # pragma: no cover - best-effort audit on failure
+            logging.getLogger("nidan.postgres").warning(
+                "Failed to record failed model_run audit row: %s", rec_exc
+            )
 
     async def publish_model_run(self, payload: dict[str, Any]) -> dict[str, Any]:
         """Atomically write model_run + snapshot + clusters + risk_assessments and advance alerts.
