@@ -7,11 +7,12 @@ conductance, cable insulation, feed voltage, occupancy timing — and turns it i
 explainable early warnings *before* a circuit fails. It never touches interlocking, signals,
 routes, points or the track circuit itself: the technician stays the decision-maker.
 
-This repository holds four things:
+This repository holds five things:
 
 | Folder | What it is |
 |---|---|
 | `Nidan-Frontend/` | The working front end: React 19 + TypeScript + TanStack Start, the app you run. |
+| `backend/` | The advisory FastAPI REST/WebSocket API, PostgreSQL and fixture-backed in-memory repositories, database schema and seed pipeline, and API/safety/seed-integrity tests. |
 | `docs/` | The product research, the implementation specification, the build brief and the front-end audit. |
 | `design/mockups/` | The static, offline prototype that fixed the visual argument for the seven screens. |
 | `design/brand/` | The NIDAN visual identity: logo system, palette, typography and brand sheets. |
@@ -29,6 +30,13 @@ This repository holds four things:
 │  └─ Research/
 │     ├─ Debdatta-Complete-Research.md              source research dossier
 │     └─ p1.md … p7.md                              chapter splits
+├─ backend/
+│  ├─ app/                                          FastAPI application and domain services
+│  ├─ db/                                           SQL schema, fixtures, seed SQL and seed generator
+│  ├─ tests/                                        API, safety-invariant and seed-integrity tests (13)
+│  ├─ pyproject.toml                                Python package and test configuration
+│  ├─ docker-compose.yml / Dockerfile               local backend and container setup
+│  └─ Backend-Architecture-Implementation.md        backend architecture
 ├─ design/
 │  ├─ mockups/                                      static prototype (start at pages/index.html)
 │  │  ├─ Mockup-UI-Planning.md
@@ -66,6 +74,34 @@ bunx tsc --noEmit  # type check
 Full detail — screens, themes, the mock → API adapter, offline outbox and the
 documented stack deviations — is in
 [`Nidan-Frontend/README.md`](Nidan-Frontend/README.md).
+
+## The backend
+
+The FastAPI backend requires Python 3.12+.
+
+```bash
+cd backend
+python -m venv .venv
+.venv\Scripts\activate
+python -m pip install --upgrade pip
+python -m pip install -e ".[dev]"
+python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+The API documentation is available at `http://127.0.0.1:8000/docs`.
+
+From the repository root, first change into `backend/`; run both commands there:
+
+```bash
+cd backend
+python -m pytest -q
+python -m ruff check .
+```
+
+By default, the backend can use fixture-backed in-memory repositories. PostgreSQL and Redis
+connections are configured through application settings when those integrations are enabled.
+The backend is advisory and non-vital: it exposes no interlocking, signalling, routing,
+points or track-circuit command path.
 
 ## Entry points
 
