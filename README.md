@@ -7,12 +7,12 @@ conductance, cable insulation, feed voltage, occupancy timing — and turns it i
 explainable early warnings *before* a circuit fails. It never touches interlocking, signals,
 routes, points or the track circuit itself: the technician stays the decision-maker.
 
-This repository holds four things:
+This repository holds five things:
 
 | Folder | What it is |
 |---|---|
 | `Nidan-Frontend/` | The working front end: React 19 + TypeScript + TanStack Start, the app you run. |
-| `backend/` | The advisory FastAPI backend, simulation services, repositories and API tests. |
+| `backend/` | The advisory FastAPI REST/WebSocket API, PostgreSQL and fixture-backed in-memory repositories, database schema and seed pipeline, and API/safety/seed-integrity tests. |
 | `docs/` | The product research, the implementation specification, the build brief and the front-end audit. |
 | `design/mockups/` | The static, offline prototype that fixed the visual argument for the seven screens. |
 | `design/brand/` | The NIDAN visual identity: logo system, palette, typography and brand sheets. |
@@ -32,8 +32,10 @@ This repository holds four things:
 │     └─ p1.md … p7.md                              chapter splits
 ├─ backend/
 │  ├─ app/                                          FastAPI application and domain services
-│  ├─ tests/                                        API and simulation tests
+│  ├─ db/                                           SQL schema, fixtures, seed SQL and seed generator
+│  ├─ tests/                                        API, safety-invariant and seed-integrity tests (13)
 │  ├─ pyproject.toml                                Python package and test configuration
+│  ├─ docker-compose.yml / Dockerfile               local backend and container setup
 │  └─ Backend-Architecture-Implementation.md        backend architecture
 ├─ design/
 │  ├─ mockups/                                      static prototype (start at pages/index.html)
@@ -88,7 +90,7 @@ python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 
 The API documentation is available at `http://127.0.0.1:8000/docs`.
 
-Run the backend tests from the repository root:
+From the repository root, first change into `backend/`; run both commands there:
 
 ```bash
 cd backend
