@@ -1,0 +1,43 @@
+# Enforces NIDAN's advisory, non-vital network boundary:
+# nidan-api pods may ONLY egress to PostgreSQL, Redis, Keycloak OIDC, and OTel.
+# Zero egress is permitted toward vital Electronic Interlocking (EI), signals,
+# routes, points, or track-circuit hardware networks.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: nidan-api-non-vital-egress
+  namespace: nidan-advisory
+spec:
+  podSelector:
+    matchLabels:
+      app: nidan-api
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - ports:
+        - protocol: TCP
+          port: 8000
+  egress:
+    # DNS resolution
+    - ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # PostgreSQL 16 (TimescaleDB) + Redis 7
+    - ports:
+        - protocol: TCP
+          port: 5432
+        - protocol: TCP
+          port: 6379
+    # Keycloak OIDC JWKS & OpenTelemetry OTLP
+    - ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 8080
+        - protocol: TCP
+          port: 4317
+        - protocol: TCP
+          port: 4318

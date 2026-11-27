@@ -1,0 +1,41 @@
+groups:
+  - name: nidan-backend-slos
+    rules:
+      - alert: NidanApiHighErrorRate
+        expr: |
+          sum(rate(nidan_http_requests_total{status=~"5.."}[5m]))
+          /
+          clamp_min(sum(rate(nidan_http_requests_total[5m])), 1) > 0.02
+        for: 5m
+        labels:
+          severity: critical
+          tier: advisory
+        annotations:
+          summary: "NIDAN API 5xx error rate > 2% for 5 minutes"
+
+      - alert: NidanDbPoolExhausted
+        expr: nidan_db_pool_size > 0 and nidan_db_pool_idle == 0
+        for: 3m
+        labels:
+          severity: warning
+          tier: advisory
+        annotations:
+          summary: "NIDAN asyncpg pool has zero idle connections"
+
+      - alert: NidanModelRunFailed
+        expr: increase(nidan_model_runs_total{status="failed"}[15m]) > 0
+        for: 0m
+        labels:
+          severity: warning
+          tier: advisory
+        annotations:
+          summary: "NIDAN model-run publication failed closed (policy/schema rejection)"
+
+      - alert: NidanFieldObservationConflictSpike
+        expr: increase(nidan_field_observations_total{outcome="conflict"}[15m]) > 5
+        for: 0m
+        labels:
+          severity: info
+          tier: advisory
+        annotations:
+          summary: "Elevated field observation 409 idempotency conflicts"

@@ -27,6 +27,7 @@ from pydantic import Field, model_validator
 
 from app.auth import NidanPrincipal, require_service_role
 from app.cache import RedisCache
+from app.connectors.smms import SmmsReadSyncAdapter, SmmsSyncRequest, SmmsSyncResponse
 from app.ingestion.schemas import TelemetryIngestResponse
 from app.ingestion.worker import TelemetryIngestProcessor
 from app.models.common import CamelModel, utc_now_iso
@@ -225,3 +226,21 @@ async def publish_model_run(
         idempotent_replay=is_replay,
         generated_at=utc_now_iso(),
     )
+
+
+@router.post(
+    "/smms-sync",
+    response_model=SmmsSyncResponse,
+    response_model_by_alias=True,
+)
+async def sync_smms_read_only(
+    body: SmmsSyncRequest,
+    request: Request,
+    response: Response,
+    _principal: Annotated[NidanPrincipal, Depends(require_service_role)],
+    cache: Annotated[RedisCache, Depends(get_cache)],
+) -> SmmsSyncResponse:
+    """One-way read-only CRIS SMMS sync (asset register + confirmed failure precedents)."""
+    response.headers["Cache-Control"] = "no-store"
+    adapter = SmmsReadSyncAdapter(request.app.state.repo, cache=cache)
+    return await adapter.sync(body)

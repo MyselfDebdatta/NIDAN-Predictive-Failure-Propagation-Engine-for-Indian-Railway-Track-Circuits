@@ -80,3 +80,10 @@ class NidanRepository(Protocol):
     async def ingest_telemetry(self, samples: list[dict[str, Any]]) -> dict[str, int]: ...
 
     async def publish_model_run(self, payload: dict[str, Any]) -> dict[str, Any]: ...
+
+    async def sync_smms_snapshot(
+        self,
+        *,
+        assets: list[dict[str, Any]],
+        precedents: list[dict[str, Any]],
+    ) -> dict[str, int]: ...

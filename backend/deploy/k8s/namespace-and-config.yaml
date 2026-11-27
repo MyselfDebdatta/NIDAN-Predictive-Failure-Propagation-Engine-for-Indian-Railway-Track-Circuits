@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nidan-advisory
+  labels:
+    app.kubernetes.io/part-of: nidan
+    nidan.railways.in/safety-tier: non-vital-advisory
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nidan-api-config
+  namespace: nidan-advisory
+data:
+  APP_ENV: "production"
+  LOG_LEVEL: "INFO"
+  NIDAN_DATA_MODE: "postgres"
+  NIDAN_REQUIRE_POSTGRES: "true"
+  AUTH_MODE: "oidc"
+  OIDC_AUDIENCE: "nidan-api"
+  NIDAN_POLICY_VERSION: "policy-2026.07"
+  RATE_LIMIT_PER_MIN: "180"
+  OTEL_SERVICE_NAME: "nidan-api"
+---
+# Placeholder Secret template — inject real values via Vault / ExternalSecrets / SealedSecrets.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: nidan-api-secrets
+  namespace: nidan-advisory
+type: Opaque
+stringData:
+  DATABASE_URL: "postgresql://nidan:REPLACE_FROM_VAULT@nidan-postgres:5432/nidan"
+  REDIS_URL: "redis://:REPLACE_FROM_VAULT@nidan-redis:6379/0"
+  OIDC_ISSUER: "https://sso.nidan.internal/realms/nidan"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector.observability:4318/v1/traces"

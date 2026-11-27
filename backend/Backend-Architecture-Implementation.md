@@ -7,7 +7,7 @@
 | Document | Backend & Database Architecture and Implementation Specification |
 | Version | 1.0 |
 | Date | 24 November 2026 |
-| Status | Implemented Phase 0/1/2/3 REST & WS API, PostgreSQL 16 schema, Alembic 0002, OIDC RBAC + WS auth, caching, `/metrics`, telemetry QC ingestion, and idempotent model-run publisher |
+| Status | Implemented Phase 0–4 REST & WS API, PostgreSQL 16 + Alembic `0003`, OIDC/Keycloak RBAC, telemetry QC ingestion, idempotent model-run publisher, read-only SMMS sync, OTel tracing, and Kubernetes/Prometheus manifests |
 | Scope | Advisory, non-vital backend services, PostgreSQL 16 + Redis 7 data platform, streaming ingestion blueprint |
 | Companion artefacts | `backend/db/0001_init.sql`, `backend/db/seed_from_fixtures.py`, `backend/app/`, `docs/Frontend-Complete-Research-Implementation.md`, `docs/AI-ML-Implementation-Spec.md`, `docs/Research/Debdatta-Complete-Research.md` |
 
@@ -250,6 +250,7 @@ All endpoints follow [Nidan-Frontend/src/lib/api.ts](../Nidan-Frontend/src/lib/a
 | `GET` | `/v1/me` | Operator role, division scope, advisory capability flags | `private, max-age=600` |
 | `POST` | `/v1/ingest/telemetry` | Canonical, C-DOT CCSP, and RDSO RDPMS telemetry intake with Stream QC (`service` role) | `no-store` |
 | `POST` | `/v1/ingest/model-run` | Idempotent, fail-closed `model_run` + `snapshot` + `cluster` + `risk_assessment` publish (`service` role) | `no-store` |
+| `POST` | `/v1/ingest/smms-sync` | One-way read-only CRIS SMMS asset register & precedent sync (`service` role) | `no-store` |
 | `GET` | `/metrics` | Prometheus exposition metrics (latency, WS connections, DB pool, field sync) | `no-store` |
 | `WS` | `/v1/stream` | Cache-invalidation events + 15 s heartbeat | — |
 
@@ -383,7 +384,7 @@ docker compose --profile full up --build
 | **Phase 0–1 (Completed)** | Schema, fixture seed pipeline, core REST + WebSocket API | `0001_init.sql`, `seed_from_fixtures.py`, `seed.sql`, `docker-compose.yml`, FastAPI `/v1/*` + `/v1/stream`, `pytest` & `ruff` CI gates |
 | **Phase 2 (Completed)** | Live Postgres CI, OIDC/Keycloak RBAC, Alembic, caching, `/metrics`, ingest endpoint | `alembic/` (`0001` baseline), `app/auth.py` (JWKS JWT + division RBAC), `app/cache.py` (ETag + Redis TTL), `StreamHub` Redis subscriber loop, `POST /v1/ingest/model-run`, `GET /metrics`, `backend-integration-ci` Postgres 16 + Redis 7 job |
 | **Phase 3 (Completed)** | Telemetry ingestion, Stream QC, model-run idempotency, WS auth, rate limiting | `alembic/versions/0002_phase3_model_run_idempotency.py`, `app/ingestion/` (CCSP/RDPMS normalizers, QC `0/1/2` + `dataTrust`, Kafka/MQTT adapters, `cli/ingest_worker.py`), `POST /v1/ingest/telemetry`, idempotent/fail-closed `/v1/ingest/model-run`, division-scoped `/v1/stream` WS + `/v1/summary`, Redis rate limiting |
-| **Phase 4** | SMMS connector & zonal scale | Read-only SMMS sync adapter, TimescaleDB hypertables, OpenTelemetry/Prometheus dashboards |
+| **Phase 4 (Completed)** | Read-only SMMS sync, TimescaleDB hypertables, OTel tracing, K8s & Keycloak ops | `alembic/versions/0003_phase4_timescale_and_smms.py` (`smms_precedent` + conditional TimescaleDB hypertable), `app/connectors/smms.py` + `POST /v1/ingest/smms-sync` + `cli/smms_sync.py`, `app/telemetry.py` (W3C `traceparent` + OTLP spans), `deploy/k8s/`, `deploy/keycloak/nidan-realm.json`, `deploy/prometheus/prometheus-alerts.yml` |
 
 ---
 
