@@ -13,6 +13,7 @@ from fastapi.responses import JSONResponse
 
 from app.metrics import metrics_registry
 from app.models.common import ProblemDetails
+from app.telemetry import parse_or_create_traceparent, trace_http_span
 
 logger = logging.getLogger("nidan.middleware")
 
@@ -124,8 +125,12 @@ def register_middleware_and_handlers(app: FastAPI) -> None:
 
     @app.middleware("http")
     async def request_context_and_security_headers(request: Request, call_next):
-        trace_id = request.headers.get("x-request-id") or uuid.uuid4().hex[:20]
-        request.state.trace_id = trace_id
+        trace_id, _span_id, traceparent = parse_or_create_traceparent(
+            request.headers.get("traceparent")
+        )
+        req_id = request.headers.get("x-request-id") or trace_id[:20]
+        request.state.trace_id = req_id
+        request.state.traceparent = traceparent
 
         # Belt-and-suspenders guard: reject any path attempting a vital command surface.
         path_lower = request.url.path.lower()
@@ -160,17 +165,29 @@ def register_middleware_and_handlers(app: FastAPI) -> None:
             return resp
 
         start = time.perf_counter()
-        response = await call_next(request)
-        duration_s = time.perf_counter() - start
-        route = request.scope.get("route")
-        route_path = getattr(route, "path", request.url.path)
+        with trace_http_span(
+            f"{request.method} {request.url.path}",
+            attributes={
+                "http.method": request.method,
+                "http.target": request.url.path,
+                "nidan.advisory_only": True,
+            },
+        ) as span:
+            response = await call_next(request)
+            duration_s = time.perf_counter() - start
+            route = request.scope.get("route")
+            route_path = getattr(route, "path", request.url.path)
+            if span is not None:
+                span.set_attribute("http.route", route_path)
+                span.set_attribute("http.status_code", response.status_code)
         metrics_registry.record_http(
             request.method,
             route_path,
             response.status_code,
             duration_s,
         )
-        response.headers["X-Trace-Id"] = trace_id
+        response.headers["X-Trace-Id"] = req_id
+        response.headers["traceparent"] = traceparent
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"

@@ -17,6 +17,7 @@ class MetricsRegistry:
         self._observations: dict[str, int] = defaultdict(int)
         self._telemetry_samples: dict[str, int] = defaultdict(int)
         self._model_runs: dict[str, int] = defaultdict(int)
+        self._smms_sync: dict[str, int] = defaultdict(int)
 
     def record_http(self, method: str, path: str, status: int, duration_s: float) -> None:
         with self._lock:
@@ -38,6 +39,11 @@ class MetricsRegistry:
         """Record model_run outcome: succeeded | replayed | failed."""
         with self._lock:
             self._model_runs[status] += 1
+
+    def record_smms_sync(self, entity: str, count: int = 1) -> None:
+        """Record read-only SMMS sync count by entity: asset | precedent."""
+        with self._lock:
+            self._smms_sync[entity] += count
 
     def render_prometheus(
         self,
@@ -105,6 +111,16 @@ class MetricsRegistry:
             for status in ("succeeded", "replayed", "failed"):
                 val = self._model_runs[status]
                 lines.append(f'nidan_model_runs_total{{status="{status}"}} {val}')
+
+            lines.extend(
+                [
+                    "# HELP nidan_smms_sync_records_total Read-only SMMS sync records processed.",
+                    "# TYPE nidan_smms_sync_records_total counter",
+                ]
+            )
+            for entity in ("asset", "precedent"):
+                val = self._smms_sync[entity]
+                lines.append(f'nidan_smms_sync_records_total{{entity="{entity}"}} {val}')
 
         lines.extend(
             [

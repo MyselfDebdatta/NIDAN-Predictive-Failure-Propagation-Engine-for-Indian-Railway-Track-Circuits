@@ -40,6 +40,7 @@ class MemoryRepository:
         self._model_health: dict[str, Any] = copy.deepcopy(raw["modelHealthFixture"])
         self._kpi_base: dict[str, Any] = copy.deepcopy(raw["kpiFixture"])
         self._smms_ids: list[str] = list(raw.get("searchIndex", {}).get("smms", []))
+        self._smms_precedents: list[dict[str, Any]] = []
         self._observations_by_key: dict[str, dict[str, Any]] = {}
         self._telemetry_seen: set[tuple[str, str, str]] = set()
         self._model_runs_by_key: dict[tuple[str, str, str], dict[str, Any]] = {}
@@ -406,6 +407,21 @@ class MemoryRepository:
                         "href": "/alerts",
                     }
                 )
+        for prec in self._smms_precedents:
+            hay = (
+                f"{prec['id']} {prec.get('assetId', '')} "
+                f"{prec.get('confirmedCause', '')} {prec.get('summary', '')}"
+            ).lower()
+            if q in hay:
+                hits.append(
+                    {
+                        "kind": "smms",
+                        "id": prec["id"],
+                        "title": prec["id"],
+                        "subtitle": prec["confirmedCause"],
+                        "href": "/alerts",
+                    }
+                )
         return hits[:20]
 
     async def ingest_telemetry(self, samples: list[dict[str, Any]]) -> dict[str, int]:
@@ -534,3 +550,42 @@ class MemoryRepository:
         }
         self._model_runs_by_key[idem_key] = copy.deepcopy(record)
         return record
+
+    async def sync_smms_snapshot(
+        self,
+        *,
+        assets: list[dict[str, Any]],
+        precedents: list[dict[str, Any]],
+    ) -> dict[str, int]:
+        assets_synced = 0
+        for item in assets:
+            asset_id = item["id"]
+            existing = self._asset_records.get(asset_id, {})
+            installed = item.get("installedOn")
+            installed_str = (
+                installed.isoformat() if hasattr(installed, "isoformat") else (installed or "")
+            )
+            self._asset_records[asset_id] = {
+                **existing,
+                "id": asset_id,
+                "lengthM": int(item["lengthM"]),
+                "circuitType": item["circuitType"],
+                "installed": installed_str,
+                "codalLifeYears": int(item.get("codalLifeYears") or 15),
+                "relay": item.get("relayModel") or "",
+                "supply": item.get("supplyId") or "",
+                "cable": item.get("cableId") or "",
+                "relayRoom": item.get("relayRoomId") or "",
+                "weatherCell": item.get("weatherCellId") or "",
+                "provenance": item.get("provenance") or "CRIS SMMS asset register",
+            }
+            assets_synced += 1
+
+        precedents_synced = 0
+        for prec in precedents:
+            pid = prec["id"]
+            self._smms_precedents = [p for p in self._smms_precedents if p["id"] != pid]
+            self._smms_precedents.append(copy.deepcopy(prec))
+            precedents_synced += 1
+
+        return {"assets_synced": assets_synced, "precedents_synced": precedents_synced}

@@ -1,0 +1,93 @@
+{
+  "realm": "nidan",
+  "enabled": true,
+  "displayName": "NIDAN Advisory Signalling Platform",
+  "sslRequired": "external",
+  "roles": {
+    "realm": [
+      {
+        "name": "maintainer",
+        "description": "ESM / Track Maintainer — read field tasks and submit observations"
+      },
+      {
+        "name": "operator",
+        "description": "SSE (Sig) / Divisional Control — acknowledge/defer alerts, merge clusters, draft SMMS orders"
+      },
+      {
+        "name": "dste",
+        "description": "Sr. DSTE / Divisional Leadership — operator privileges plus Rolling Block & model review"
+      },
+      {
+        "name": "service",
+        "description": "Ingestion / ML Model Runner / SMMS Read-Sync service account"
+      },
+      {
+        "name": "admin",
+        "description": "Platform Administrator (non-vital advisory platform only)"
+      }
+    ]
+  },
+  "groups": [
+    { "name": "ADRA", "path": "/ADRA" },
+    { "name": "BKSC", "path": "/BKSC" },
+    { "name": "KGP", "path": "/KGP" },
+    { "name": "TATA", "path": "/TATA" }
+  ],
+  "clients": [
+    {
+      "clientId": "nidan-frontend",
+      "name": "NIDAN Control Room & Field PWA",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      },
+      "redirectUris": [
+        "http://localhost:3000/*",
+        "http://localhost:5173/*"
+      ],
+      "webOrigins": [
+        "http://localhost:3000",
+        "http://localhost:5173"
+      ],
+      "protocolMappers": [
+        {
+          "name": "nidan-api-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.client.audience": "nidan-api",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        },
+        {
+          "name": "division-ids-mapper",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-group-membership-mapper",
+          "config": {
+            "full.path": "false",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "claim.name": "division_ids"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "nidan-api",
+      "name": "NIDAN FastAPI Resource Server",
+      "bearerOnly": true,
+      "publicClient": false
+    },
+    {
+      "clientId": "nidan-ingest-worker",
+      "name": "NIDAN Telemetry, Model-Run & SMMS Sync Service",
+      "publicClient": false,
+      "serviceAccountsEnabled": true,
+      "standardFlowEnabled": false
+    }
+  ]
+}

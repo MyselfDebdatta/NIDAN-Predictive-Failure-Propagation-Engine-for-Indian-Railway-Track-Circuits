@@ -25,6 +25,7 @@ from app.services import (
     StreamHub,
     SummaryService,
 )
+from app.telemetry import configure_opentelemetry
 
 
 def create_app(
@@ -69,6 +70,7 @@ def create_app(
 
         # Phase 2: start Redis pub/sub subscriber for multi-replica fan-out
         await stream_hub.start()
+        configure_opentelemetry(cfg.otel_service_name, cfg.otel_exporter_otlp_endpoint)
 
         try:
             yield

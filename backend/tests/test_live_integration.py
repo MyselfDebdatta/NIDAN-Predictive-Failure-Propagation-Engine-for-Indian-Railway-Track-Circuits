@@ -492,3 +492,42 @@ async def test_postgres_repo_model_run_idempotency_and_fail_closed(pg_pool: asyn
         "where code_version = 'phase3-fail-0.3.0' and status = 'failed'"
     )
     assert failed_count >= 1
+
+
+@pytest.mark.integration
+async def test_postgres_repo_smms_sync_and_search_precedent(pg_pool: asyncpg.Pool) -> None:
+    """Phase 4: smms_precedent table exists and read-only SMMS sync populates asset + search."""
+    from datetime import UTC, datetime
+
+    from app.services.postgres_repo import PostgresRepository
+
+    repo = PostgresRepository(pg_pool)
+    counts = await repo.sync_smms_snapshot(
+        assets=[
+            {
+                "id": "ADRA/TC/99T",
+                "divisionId": "ADRA",
+                "name": "99T Integration Circuit",
+                "route": "ADRA-BKSC",
+                "circuitType": "DC",
+                "lengthM": 580,
+                "provenance": "CRIS SMMS test export",
+                "fetchedAt": datetime.now(UTC),
+            }
+        ],
+        precedents=[
+            {
+                "id": "SMMS-INT-99",
+                "assetId": "ADRA/TC/99T",
+                "divisionId": "ADRA",
+                "failureMode": "F1",
+                "confirmedCause": "Integration SMMS precedent ballast drain",
+                "summary": "Verified by integration test",
+                "provenance": "CRIS SMMS failure register",
+            }
+        ],
+    )
+    assert counts == {"assets_synced": 1, "precedents_synced": 1}
+
+    hits = await repo.search("SMMS-INT-99")
+    assert any(h["kind"] == "smms" and h["id"] == "SMMS-INT-99" for h in hits)

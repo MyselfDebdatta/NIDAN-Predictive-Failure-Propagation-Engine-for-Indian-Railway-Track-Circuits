@@ -872,6 +872,32 @@ class PostgresRepository:
                         "href": "/clusters",
                     }
                 )
+            has_smms_table = await conn.fetchval(
+                "select to_regclass('public.smms_precedent') is not null"
+            )
+            if has_smms_table:
+                smms_rows = await conn.fetch(
+                    """
+                    select id, confirmed_cause, summary
+                    from smms_precedent
+                    where id ilike $1
+                       or coalesce(asset_id, '') ilike $1
+                       or confirmed_cause ilike $1
+                       or summary ilike $1
+                    limit 5
+                    """,
+                    pattern,
+                )
+                for r in smms_rows:
+                    hits.append(
+                        {
+                            "kind": "smms",
+                            "id": r["id"],
+                            "title": r["id"],
+                            "subtitle": r["confirmed_cause"],
+                            "href": "/alerts",
+                        }
+                    )
         return hits[:20]
 
     async def ingest_telemetry(self, samples: list[dict[str, Any]]) -> dict[str, int]:
@@ -1274,6 +1300,141 @@ class PostgresRepository:
             "clusters_updated": list(clusters_updated),
             "idempotent_replay": False,
         }
+
+    async def sync_smms_snapshot(
+        self,
+        *,
+        assets: list[dict[str, Any]],
+        precedents: list[dict[str, Any]],
+    ) -> dict[str, int]:
+        """One-way read-only SMMS sync into asset, asset_record_source, and smms_precedent."""
+        assets_synced = 0
+        precedents_synced = 0
+        async with self.pool.acquire() as conn:
+            async with conn.transaction():
+                for item in assets:
+                    div_id = item["divisionId"]
+                    await conn.execute(
+                        "insert into division (id, name) values ($1, $1) "
+                        "on conflict (id) do nothing",
+                        div_id,
+                    )
+                    if item.get("weatherCellId"):
+                        await conn.execute(
+                            "insert into weather_cell (id, label) values ($1, $1) "
+                            "on conflict (id) do nothing",
+                            item["weatherCellId"],
+                        )
+                    if item.get("relayRoomId"):
+                        await conn.execute(
+                            "insert into relay_room (id, division_id) values ($1, $2) "
+                            "on conflict (id) do nothing",
+                            item["relayRoomId"],
+                            div_id,
+                        )
+                    await conn.execute(
+                        """
+                        insert into asset (
+                          id, division_id, name, route, circuit_type, length_m,
+                          installed_on, codal_life_years, relay_model, supply_id,
+                          cable_id, relay_room_id, weather_cell_id, updated_at
+                        ) values (
+                          $1, $2, $3, $4, $5::circuit_type, $6,
+                          $7, $8, $9, $10, $11, $12, $13, now()
+                        )
+                        on conflict (id) do update set
+                          division_id = excluded.division_id,
+                          name = excluded.name,
+                          route = excluded.route,
+                          circuit_type = excluded.circuit_type,
+                          length_m = excluded.length_m,
+                          installed_on = coalesce(excluded.installed_on, asset.installed_on),
+                          codal_life_years = coalesce(
+                            excluded.codal_life_years, asset.codal_life_years
+                          ),
+                          relay_model = coalesce(excluded.relay_model, asset.relay_model),
+                          supply_id = coalesce(excluded.supply_id, asset.supply_id),
+                          cable_id = coalesce(excluded.cable_id, asset.cable_id),
+                          relay_room_id = coalesce(excluded.relay_room_id, asset.relay_room_id),
+                          weather_cell_id = coalesce(
+                            excluded.weather_cell_id, asset.weather_cell_id
+                          ),
+                          updated_at = now()
+                        """,
+                        item["id"],
+                        div_id,
+                        item["name"],
+                        item["route"],
+                        item["circuitType"],
+                        int(item["lengthM"]),
+                        item.get("installedOn"),
+                        item.get("codalLifeYears"),
+                        item.get("relayModel"),
+                        item.get("supplyId"),
+                        item.get("cableId"),
+                        item.get("relayRoomId"),
+                        item.get("weatherCellId"),
+                    )
+                    await conn.execute(
+                        """
+                        insert into asset_record_source (asset_id, provenance, fetched_at)
+                        values ($1, $2, $3)
+                        on conflict (asset_id) do update set
+                          provenance = excluded.provenance,
+                          fetched_at = excluded.fetched_at
+                        """,
+                        item["id"],
+                        item.get("provenance") or "CRIS SMMS asset register",
+                        item.get("fetchedAt"),
+                    )
+                    assets_synced += 1
+
+                if precedents:
+                    has_smms_table = await conn.fetchval(
+                        "select to_regclass('public.smms_precedent') is not null"
+                    )
+                    if not has_smms_table:
+                        raise ApiProblemException(
+                            status=503,
+                            title="Schema migration required",
+                            detail="smms_precedent table missing; run 'alembic upgrade head'.",
+                            error_type="urn:nidan:migration-required",
+                        )
+                    for prec in precedents:
+                        if prec.get("divisionId"):
+                            await conn.execute(
+                                "insert into division (id, name) values ($1, $1) "
+                                "on conflict (id) do nothing",
+                                prec["divisionId"],
+                            )
+                        await conn.execute(
+                            """
+                            insert into smms_precedent (
+                              id, asset_id, division_id, failure_mode,
+                              confirmed_cause, occurred_on, summary, provenance, synced_at
+                            ) values ($1, $2, $3, $4, $5, $6, $7, $8, now())
+                            on conflict (id) do update set
+                              asset_id = excluded.asset_id,
+                              division_id = excluded.division_id,
+                              failure_mode = excluded.failure_mode,
+                              confirmed_cause = excluded.confirmed_cause,
+                              occurred_on = excluded.occurred_on,
+                              summary = excluded.summary,
+                              provenance = excluded.provenance,
+                              synced_at = now()
+                            """,
+                            prec["id"],
+                            prec.get("assetId"),
+                            prec.get("divisionId"),
+                            prec.get("failureMode"),
+                            prec["confirmedCause"],
+                            prec.get("occurredOn"),
+                            prec.get("summary", ""),
+                            prec.get("provenance") or "CRIS SMMS failure register",
+                        )
+                        precedents_synced += 1
+
+        return {"assets_synced": assets_synced, "precedents_synced": precedents_synced}
 
 
 def _fmt_reading(val: Any) -> str:
