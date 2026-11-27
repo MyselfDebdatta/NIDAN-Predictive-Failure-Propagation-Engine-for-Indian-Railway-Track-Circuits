@@ -754,6 +754,156 @@ class PostgresRepository:
                 )
         return hits[:20]
 
+    async def publish_model_run(self, payload: dict[str, Any]) -> dict[str, Any]:
+        """Atomically write model_run + snapshot + risk_assessment rows and advance alerts.
+
+        Returns IDs and counts for the caller to emit invalidation events.
+        """
+        import uuid as _uuid
+        from datetime import datetime as _dt
+
+        def _as_dt(val: Any) -> Any:
+            if isinstance(val, str):
+                return _dt.fromisoformat(val.replace("Z", "+00:00"))
+            return val
+
+        try:
+            async with self.pool.acquire() as conn:
+                async with conn.transaction():
+                    model_run_id = str(_uuid.uuid4())
+                    await conn.execute(
+                        """
+                        insert into model_run (id, started_at, finished_at, input_watermark,
+                                              code_version, params, status)
+                        values ($1, now(), now(), $2, $3, '{}'::jsonb, 'succeeded')
+                        """,
+                        model_run_id,
+                        _as_dt(payload.get("inputWatermark")),
+                        payload.get("codeVersion", "unknown"),
+                    )
+
+                    snapshot_id = str(_uuid.uuid4())
+                    snapshot_as_of = _as_dt(payload.get("snapshotAsOf"))
+                    await conn.execute(
+                        """
+                        insert into snapshot (id, as_of, week, label)
+                        values ($1, $2, $3, $4)
+                        on conflict (as_of) do nothing
+                        """,
+                        snapshot_id,
+                        snapshot_as_of,
+                        payload.get("snapshotWeek", 1),
+                        payload.get("snapshotLabel", ""),
+                    )
+                    real_snapshot_id = await conn.fetchval(
+                        "select id from snapshot where as_of = $1",
+                        snapshot_as_of,
+                    )
+                    if real_snapshot_id:
+                        snapshot_id = str(real_snapshot_id)
+
+                    updated_asset_ids: list[str] = []
+                    clusters_updated: set[str] = set()
+
+                    for ra in payload.get("assessments", []):
+                        asset_id = ra.get("assetId") or ra.get("asset_id")
+                        if not asset_id:
+                            continue
+                        ra_id_val = str(_uuid.uuid4())
+                        await conn.execute(
+                            """
+                            insert into risk_assessment (
+                              id, asset_id, snapshot_id, model_run_id, policy_version,
+                              level, policy_rank, persistence, h24, h72, h7d, ece_zone,
+                              p10_days, median_days, p90_days, rul_coverage, held_out_n,
+                              likely_modes, mode_probability, mode_set_coverage,
+                              data_trust_score, data_trust_flags, cluster_root,
+                              block_window_id, block_fit, block_minutes,
+                              explanation, ranking, model_versions, computed_at
+                            ) values (
+                              $1, $2, $3, $4, $5,
+                              $6::alert_level, $7, $8, $9, $10, $11, $12,
+                              $13, $14, $15, $16, $17,
+                              $18::text[], $19, $20,
+                              $21, $22::text[], $23,
+                              $24, $25::block_fit, $26,
+                              $27::jsonb, $28::jsonb, $29::jsonb, $30
+                            )
+                            """,
+                            ra_id_val,
+                            asset_id,
+                            snapshot_id,
+                            model_run_id,
+                            ra.get(
+                                "policyVersion",
+                                payload.get("policyVersion", "policy-2026.07"),
+                            ),
+                            ra["level"],
+                            ra["policyRank"],
+                            ra.get("persistence", 0),
+                            ra["h24"],
+                            ra["h72"],
+                            ra["h7d"],
+                            ra["eceZone"],
+                            ra["p10Days"],
+                            ra["medianDays"],
+                            ra["p90Days"],
+                            ra["rulCoverage"],
+                            ra.get("heldOutN", 0),
+                            ra.get("likelyModes", ["F1"]),
+                            ra.get("modeProbability", 0.5),
+                            ra.get("modeSetCoverage", 0.9),
+                            ra.get("dataTrustScore", 1.0),
+                            ra.get("dataTrustFlags", []),
+                            ra.get("clusterRoot", False),
+                            ra.get("blockWindowId"),
+                            ra.get("blockFit"),
+                            ra.get("blockMinutes"),
+                            json.dumps(ra.get("explanation", {})),
+                            json.dumps(ra.get("ranking", {})),
+                            json.dumps(ra.get("modelVersions", {})),
+                            _as_dt(ra.get("computedAt")),
+                        )
+
+                        alert_row = await conn.fetchrow(
+                            "select id, cluster_id from alert "
+                            "where asset_id = $1 and status = 'open' limit 1",
+                            asset_id,
+                        )
+                        if alert_row:
+                            await conn.execute(
+                                "update alert set current_assessment_id = $1 where id = $2",
+                                ra_id_val,
+                                alert_row["id"],
+                            )
+                            if alert_row["cluster_id"]:
+                                clusters_updated.add(alert_row["cluster_id"])
+
+                        updated_asset_ids.append(asset_id)
+        except asyncpg.exceptions.CheckViolationError as exc:
+            raise ApiProblemException(
+                status=422,
+                title="Policy rule violation",
+                detail=f"Assessment violates SQL policy constraint: {exc.constraint_name or exc}",
+                error_type="urn:nidan:policy-violation",
+            ) from exc
+        except asyncpg.exceptions.ForeignKeyViolationError as exc:
+            raise ApiProblemException(
+                status=404,
+                title="Referenced entity not found",
+                detail=f"Model run references unknown asset or block: {exc}",
+                error_type="urn:nidan:not-found",
+            ) from exc
+
+        return {
+            "model_run_id": model_run_id,
+            "snapshot_id": snapshot_id,
+            "assessments_written": len(updated_asset_ids),
+            "alerts_updated": len(updated_asset_ids),
+            "updated_asset_ids": updated_asset_ids,
+            "clusters_updated": list(clusters_updated),
+        }
+
 
 def _fmt_reading(val: Any) -> str:
     num = float(val)

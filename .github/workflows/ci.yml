@@ -97,18 +97,84 @@ jobs:
           fi
           pip install ruff pytest
 
+      - name: Check backend formatting with Ruff
+        if: steps.check.outputs.has_python == 'true'
+        working-directory: backend
+        run: ruff format --check .
+
       - name: Lint backend with Ruff
         if: steps.check.outputs.has_python == 'true'
         working-directory: backend
         run: ruff check .
 
-      - name: Run pytest
+      - name: Run unit & contract pytest
         if: steps.check.outputs.has_python == 'true'
         working-directory: backend
         shell: bash
         run: |
           if [ -n "$(find . -maxdepth 3 \( -name 'test_*.py' -o -name '*_test.py' \) 2>/dev/null)" ]; then
-            pytest
+            pytest -v -m "not integration"
           else
             echo "No pytest files found yet."
           fi
+
+  backend-integration-ci:
+    name: backend-integration-ci
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: nidan
+          POSTGRES_USER: nidan
+          POSTGRES_PASSWORD: nidan_dev_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U nidan -d nidan"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=5s
+          --health-timeout=3s
+          --health-retries=10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install PostgreSQL client & backend dependencies
+        working-directory: backend
+        run: |
+          sudo apt-get update && sudo apt-get install -y postgresql-client
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest
+
+      - name: Initialize & seed PostgreSQL 16 + verify Alembic baseline
+        working-directory: backend
+        env:
+          PGPASSWORD: nidan_dev_password
+          DATABASE_URL: postgresql://nidan:nidan_dev_password@localhost:5432/nidan
+        run: |
+          psql -h localhost -U nidan -d nidan -v ON_ERROR_STOP=1 -f db/0001_init.sql
+          psql -h localhost -U nidan -d nidan -v ON_ERROR_STOP=1 -f db/seed.sql
+          python -m alembic stamp 0001
+          python -m alembic current
+
+      - name: Run live Postgres + Redis integration tests
+        working-directory: backend
+        env:
+          NIDAN_TEST_DATABASE_URL: postgresql://nidan:nidan_dev_password@localhost:5432/nidan
+          NIDAN_TEST_REDIS_URL: redis://localhost:6379/0
+        run: pytest -v -m integration

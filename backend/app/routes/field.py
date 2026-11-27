@@ -6,6 +6,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Header, Response
 
+from app.auth import NidanPrincipal, get_current_principal, require_maintainer_or_above
 from app.middleware import ApiProblemException
 from app.models.field import (
     FieldObservationReceipt,
@@ -21,11 +22,21 @@ router = APIRouter(prefix="/v1/field", tags=["field"])
 @router.get("/tasks", response_model=FieldTasksResponse, response_model_by_alias=True)
 async def get_field_tasks(
     response: Response,
+    principal: Annotated[NidanPrincipal, Depends(get_current_principal)],
     service: Annotated[FieldService, Depends(get_field_service)],
 ):
     """Return bilingual field verification tasks and sync status."""
     response.headers["Cache-Control"] = "private, max-age=30"
-    return await service.get_tasks()
+    data = await service.get_tasks()
+    if not principal.has_global_scope:
+        filtered = [
+            t
+            for t in data.get("tasks", [])
+            if "/" not in t.get("assetId", "")
+            or principal.can_access_division(t["assetId"].split("/", 1)[0])
+        ]
+        return {**data, "tasks": filtered}
+    return data
 
 
 @router.post(
@@ -36,6 +47,7 @@ async def get_field_tasks(
 async def submit_observation(
     body: FieldObservationRequest,
     response: Response,
+    _principal: Annotated[NidanPrincipal, Depends(require_maintainer_or_above)],
     service: Annotated[FieldService, Depends(get_field_service)],
     idempotency_key: Annotated[str | None, Header(alias="idempotency-key")] = None,
 ):

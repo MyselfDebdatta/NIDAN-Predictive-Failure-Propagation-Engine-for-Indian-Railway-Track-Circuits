@@ -1,7 +1,8 @@
-"""Alert queue, detail, acknowledgement, and deferral service."""
+"""Alert queue, detail, acknowledgement, deferral, and model-run publish service."""
 
 from __future__ import annotations
 
+import uuid
 from typing import Any
 
 from app.middleware import ApiProblemException
@@ -69,3 +70,25 @@ class AlertService:
             }
         )
         return result
+
+    async def publish_model_run(self, payload: dict[str, Any]) -> dict[str, Any]:
+        """Publish a model-run snapshot atomically.
+
+        Delegates to the repository.  When running against MemoryRepository the
+        operation is a stub returning placeholder IDs (useful for contract tests).
+        When running against PostgresRepository it executes the full DB
+        transaction inserting model_run, snapshot, and risk_assessment rows.
+        """
+        if hasattr(self.repo, "publish_model_run"):
+            return await self.repo.publish_model_run(payload)  # type: ignore[union-attr]
+
+        # MemoryRepository stub — returns placeholder data for fixture tests.
+        assessments = payload.get("assessments", [])
+        return {
+            "model_run_id": str(uuid.uuid4()),
+            "snapshot_id": str(uuid.uuid4()),
+            "assessments_written": len(assessments),
+            "alerts_updated": len(assessments),
+            "updated_asset_ids": [a.get("assetId", a.get("asset_id", "")) for a in assessments],
+            "clusters_updated": [],
+        }

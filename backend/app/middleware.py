@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import time
 import uuid
 from typing import Any
 
@@ -10,6 +11,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
+from app.metrics import metrics_registry
 from app.models.common import ProblemDetails
 
 logger = logging.getLogger("nidan.middleware")
@@ -109,7 +111,17 @@ def register_middleware_and_handlers(app: FastAPI) -> None:
                 retryable=False,
             )
 
+        start = time.perf_counter()
         response = await call_next(request)
+        duration_s = time.perf_counter() - start
+        route = request.scope.get("route")
+        route_path = getattr(route, "path", request.url.path)
+        metrics_registry.record_http(
+            request.method,
+            route_path,
+            response.status_code,
+            duration_s,
+        )
         response.headers["X-Trace-Id"] = trace_id
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
