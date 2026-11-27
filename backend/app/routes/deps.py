@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from fastapi import Request
 
+from app.cache import RedisCache
 from app.services import (
     AlertService,
     AssetService,
@@ -46,3 +47,7 @@ def get_summary_service(request: Request) -> SummaryService:
 
 def get_stream_hub(request: Request) -> StreamHub:
     return request.app.state.stream_hub
+
+
+def get_cache(request: Request) -> RedisCache:
+    return request.app.state.cache

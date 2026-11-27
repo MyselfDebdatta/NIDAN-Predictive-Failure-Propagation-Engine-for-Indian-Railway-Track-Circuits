@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from app.metrics import metrics_registry
+from app.middleware import ApiProblemException
 from app.services.repository import NidanRepository
 from app.services.stream_hub import StreamHub
 
@@ -21,10 +23,16 @@ class FieldService:
     async def submit_observation(
         self, *, idempotency_key: str, payload: dict[str, Any]
     ) -> dict[str, Any]:
-        receipt, replayed = await self.repo.submit_observation(
-            idempotency_key=idempotency_key,
-            payload=payload,
-        )
+        try:
+            receipt, replayed = await self.repo.submit_observation(
+                idempotency_key=idempotency_key,
+                payload=payload,
+            )
+        except ApiProblemException as exc:
+            if exc.status == 409:
+                metrics_registry.record_observation("conflict")
+            raise
+        metrics_registry.record_observation("replayed" if replayed else "created")
         if not replayed:
             await self.stream.publish(
                 {

@@ -7,6 +7,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.cache import RedisCache
 from app.config import Settings, get_settings
 from app.database import DatabaseManager
 from app.middleware import register_middleware_and_handlers
@@ -36,7 +37,12 @@ def create_app(
 
     @asynccontextmanager
     async def lifespan(app_instance: FastAPI):
-        db = DatabaseManager(cfg.database_url, cfg.redis_url, data_mode=cfg.data_mode)
+        db = DatabaseManager(
+            cfg.database_url,
+            cfg.redis_url,
+            data_mode=cfg.data_mode,
+            require_postgres=cfg.require_postgres,
+        )
         await db.connect()
 
         if repo_override is not None:
@@ -47,9 +53,11 @@ def create_app(
             repo = MemoryRepository(cfg.fixtures_snapshot_path)
 
         stream_hub = StreamHub(redis_client=db.redis)
+        cache = RedisCache(redis_client=db.redis)
         app_instance.state.settings = cfg
         app_instance.state.db = db
         app_instance.state.repo = repo
+        app_instance.state.cache = cache
         app_instance.state.stream_hub = stream_hub
         app_instance.state.alert_service = AlertService(repo, stream_hub)
         app_instance.state.asset_service = AssetService(repo)
@@ -59,9 +67,13 @@ def create_app(
         app_instance.state.model_service = ModelService(repo)
         app_instance.state.summary_service = SummaryService(repo)
 
+        # Phase 2: start Redis pub/sub subscriber for multi-replica fan-out
+        await stream_hub.start()
+
         try:
             yield
         finally:
+            await stream_hub.stop()
             await db.disconnect()
 
     application = FastAPI(

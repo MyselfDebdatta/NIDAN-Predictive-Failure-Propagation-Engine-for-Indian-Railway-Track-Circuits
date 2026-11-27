@@ -8,6 +8,8 @@ from app.routes import (
     clusters,
     field,
     healthz,
+    ingest,
+    metrics,
     models,
     search,
     summary,
@@ -17,6 +19,7 @@ from app.routes import (
 
 ALL_ROUTERS = [
     healthz.router,
+    metrics.router,
     alerts.router,
     assets.router,
     blocks.router,
@@ -27,5 +30,6 @@ ALL_ROUTERS = [
     work_orders.router,
     search.router,
     auth.router,
+    ingest.router,
     ws.router,
 ]

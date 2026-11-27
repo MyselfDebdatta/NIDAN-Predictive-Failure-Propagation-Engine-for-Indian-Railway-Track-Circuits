@@ -7,9 +7,9 @@
 | Document | Backend & Database Architecture and Implementation Specification |
 | Version | 1.0 |
 | Date | 24 November 2026 |
-| Status | Implemented Phase 0/1 REST API, PostgreSQL 16 schema, and fixture seed pipeline |
+| Status | Implemented Phase 0/1/2 REST & WS API, PostgreSQL 16 schema, Alembic baseline, OIDC RBAC, Redis pub/sub & caching, Prometheus `/metrics`, and model-run ingest |
 | Scope | Advisory, non-vital backend services, PostgreSQL 16 + Redis 7 data platform, streaming ingestion blueprint |
-| Companion artefacts | `backend/db/0001_init.sql`, `backend/db/seed_from_fixtures.py`, `backend/app/`, `docs/Frontend-Complete-Research-Implementation.md`, `docs/Research/Debdatta-Complete-Research.md` |
+| Companion artefacts | `backend/db/0001_init.sql`, `backend/db/seed_from_fixtures.py`, `backend/app/`, `docs/Frontend-Complete-Research-Implementation.md`, `docs/AI-ML-Implementation-Spec.md`, `docs/Research/Debdatta-Complete-Research.md` |
 
 > **Advisory, non-vital boundary.** No table, PostgreSQL role, API route, or service worker in NIDAN holds any write path or credential to Electronic Interlocking (EI), signals, routes, points, axle counters (BPAC), or track-circuit hardware. Every write endpoint is strictly workflow state (alert acknowledgement, deferral, offline field verification intake, or **draft** SMMS work-order pre-fill).
 
@@ -248,6 +248,8 @@ All endpoints follow [Nidan-Frontend/src/lib/api.ts](../Nidan-Frontend/src/lib/a
 | `POST` | `/v1/work-orders/draft` | Create local SMMS draft (`status: "draft"` only) | `no-store` |
 | `GET` | `/v1/search?q=` | Federated search (alerts, assets, clusters, SMMS precedents) | `no-store` |
 | `GET` | `/v1/me` | Operator role, division scope, advisory capability flags | `private, max-age=600` |
+| `POST` | `/v1/ingest/model-run` | Atomic `model_run` + `snapshot` + `risk_assessment` publish (`service` role) | `no-store` |
+| `GET` | `/metrics` | Prometheus exposition metrics (latency, WS connections, DB pool, field sync) | `no-store` |
 | `WS` | `/v1/stream` | Cache-invalidation events + 15 s heartbeat | — |
 
 ---
@@ -264,7 +266,7 @@ Production deployment delegates identity to **Keycloak** (OIDC / OAuth 2.1 with 
 | `service` | CRIS / RDPMS / Model Runner | System-wide (ingest only) | Append telemetry, publish `snapshot` + `risk_assessment` (no workflow mutation) |
 | `admin` | Platform Administrator | System-wide | Model registry promotion gates, audit inspection (still **no** vital write path) |
 
-**Current Phase 0/1 State**: `/v1/me` returns the seeded `operator` persona (`ADRA`, `BKSC`, `KGP`, `TATA` demo scope) with `advisoryOnly: true` and `vitalCommandCapable: false`. Phase 2 introduces JWT RS256/ES256 verification middleware validating `iss`, `aud`, `exp`, `realm_access.roles`, and `division_ids` claims on every `/v1/*` request.
+**Phase 2 State**: `AUTH_MODE=dev` (default) preserves the seeded `operator` persona (`ADRA`, `BKSC`, `KGP`, `TATA` demo scope) for local development and fixture tests. Setting `AUTH_MODE=oidc` enforces RS256/ES256 JWKS JWT verification (`iss`, `aud`, `exp`, `realm_access.roles`, `division_ids`/`groups`), role checks (`maintainer`, `operator`, `dste`, `service`, `admin`), and division-level scoping across `/v1/*` routes via `backend/app/auth.py`.
 
 ---
 
@@ -378,8 +380,8 @@ docker compose --profile full up --build
 | Phase | Scope | Deliverables |
 |---|---|---|
 | **Phase 0–1 (Completed)** | Schema, fixture seed pipeline, core REST + WebSocket API | `0001_init.sql`, `seed_from_fixtures.py`, `seed.sql`, `docker-compose.yml`, FastAPI `/v1/*` + `/v1/stream`, `pytest` & `ruff` CI gates |
-| **Phase 2** | Live Postgres CI, OIDC/Keycloak RBAC, Alembic | Postgres integration tests in CI, JWT verification & division scoping, Alembic baseline `0001` |
-| **Phase 3** | Streaming ingestion & physics/ML integration | MQTT/CCSP → Kafka consumers, UKF physics twin runner, GNN cluster job, survival RUL publisher |
+| **Phase 2 (Completed)** | Live Postgres CI, OIDC/Keycloak RBAC, Alembic, caching, `/metrics`, ingest endpoint | `alembic/` (`0001` baseline), `app/auth.py` (JWKS JWT + division RBAC), `app/cache.py` (ETag + Redis TTL), `StreamHub` Redis subscriber loop, `POST /v1/ingest/model-run`, `GET /metrics`, `backend-integration-ci` Postgres 16 + Redis 7 job |
+| **Phase 3** | Streaming ingestion & physics/ML integration | MQTT/CCSP → Kafka consumers, UKF physics twin runner, GNN cluster job, survival RUL workers |
 | **Phase 4** | SMMS connector & zonal scale | Read-only SMMS sync adapter, TimescaleDB hypertables, OpenTelemetry/Prometheus dashboards |
 
 ---

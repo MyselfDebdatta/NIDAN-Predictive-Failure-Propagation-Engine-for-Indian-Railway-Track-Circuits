@@ -6,8 +6,10 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Response
 
+from app.auth import NidanPrincipal, get_current_principal
+from app.cache import RedisCache
 from app.models.summary import KpiSummary
-from app.routes.deps import get_summary_service
+from app.routes.deps import get_cache, get_summary_service
 from app.services import SummaryService
 
 router = APIRouter(prefix="/v1/summary", tags=["summary"])
@@ -16,8 +18,14 @@ router = APIRouter(prefix="/v1/summary", tags=["summary"])
 @router.get("", response_model=KpiSummary, response_model_by_alias=True)
 async def get_summary(
     response: Response,
+    _principal: Annotated[NidanPrincipal, Depends(get_current_principal)],
     service: Annotated[SummaryService, Depends(get_summary_service)],
+    cache: Annotated[RedisCache, Depends(get_cache)],
 ):
     """Return command-center KPI metrics and queue breakdown."""
     response.headers["Cache-Control"] = "private, max-age=15"
-    return await service.get_kpis()
+    data = await cache.get_json("summary:kpi")
+    if data is None:
+        data = await service.get_kpis()
+        await cache.set_json("summary:kpi", data, ttl_seconds=15)
+    return data

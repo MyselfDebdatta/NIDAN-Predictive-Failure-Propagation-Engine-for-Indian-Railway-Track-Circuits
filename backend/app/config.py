@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     )
 
     app_name: str = "NIDAN Predictive Failure Propagation API"
-    app_version: str = "0.1.0"
+    app_version: str = "0.2.0"
     app_env: Literal["development", "staging", "production", "test"] = "development"
     log_level: str = "INFO"
 
@@ -30,6 +30,20 @@ class Settings(BaseSettings):
         default="postgres",
         validation_alias="NIDAN_DATA_MODE",
     )
+    require_postgres: bool = Field(
+        default=False,
+        validation_alias="NIDAN_REQUIRE_POSTGRES",
+    )
+
+    # Authentication — "dev" bypasses JWT for local development and CI.
+    # Set AUTH_MODE=oidc in production with OIDC_ISSUER + OIDC_AUDIENCE.
+    auth_mode: Literal["dev", "oidc"] = Field(
+        default="dev",
+        validation_alias="AUTH_MODE",
+    )
+    oidc_issuer: str = Field(default="", validation_alias="OIDC_ISSUER")
+    oidc_audience: str = Field(default="nidan-api", validation_alias="OIDC_AUDIENCE")
+    oidc_jwks_url: str = Field(default="", validation_alias="OIDC_JWKS_URL")
 
     cors_origins_raw: str = Field(
         default="http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173",

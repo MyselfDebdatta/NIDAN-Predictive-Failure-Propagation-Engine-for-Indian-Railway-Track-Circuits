@@ -12,12 +12,20 @@ logger = logging.getLogger("nidan.database")
 
 
 class DatabaseManager:
-    """Manages optional asyncpg pool and Redis client with graceful fallback."""
+    """Manages optional asyncpg pool and Redis client with optional strict mode."""
 
-    def __init__(self, database_url: str, redis_url: str, data_mode: str = "postgres") -> None:
+    def __init__(
+        self,
+        database_url: str,
+        redis_url: str,
+        data_mode: str = "postgres",
+        *,
+        require_postgres: bool = False,
+    ) -> None:
         self.database_url = database_url
         self.redis_url = redis_url
         self.data_mode = data_mode
+        self.require_postgres = require_postgres
         self.pool: asyncpg.Pool | None = None
         self.redis: aioredis.Redis | None = None
 
@@ -36,6 +44,10 @@ class DatabaseManager:
             )
             logger.info("Connected to PostgreSQL pool")
         except Exception as exc:  # pragma: no cover - depends on external daemon
+            if self.require_postgres:
+                raise RuntimeError(
+                    f"NIDAN_REQUIRE_POSTGRES=true and PostgreSQL connection failed: {exc}"
+                ) from exc
             logger.warning("PostgreSQL unavailable (%s); falling back to fixture store", exc)
             self.pool = None
 
