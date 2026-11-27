@@ -261,12 +261,14 @@ async def test_postgres_repo_field_observations_idempotency(pg_pool: asyncpg.Poo
         "createdAt": "2026-11-27T00:00:00Z",
     }
     # First submission
-    result = await repo.submit_observation(idempotency_key=key, payload=payload)
+    result, replayed = await repo.submit_observation(idempotency_key=key, payload=payload)
+    assert replayed is False
     assert result["queued"] is True
     assert result["replayed"] is False
 
     # Identical replay → 200 replayed
-    result2 = await repo.submit_observation(idempotency_key=key, payload=payload)
+    result2, replayed2 = await repo.submit_observation(idempotency_key=key, payload=payload)
+    assert replayed2 is True
     assert result2["replayed"] is True
     assert result2["receipt"] == result["receipt"]
 
@@ -321,9 +323,16 @@ async def test_redis_stream_hub_publish(pg_pool: asyncpg.Pool) -> None:
 
     test_event = {"type": "integration.test", "id": str(uuid.uuid4())}
     await hub.publish(test_event)
-    await asyncio.sleep(0.1)
 
-    msg = await pubsub.get_message(ignore_subscribe_messages=True, timeout=1.0)
+    msg = None
+    loop = asyncio.get_running_loop()
+    deadline = loop.time() + 2.0
+    while loop.time() < deadline:
+        msg = await pubsub.get_message(ignore_subscribe_messages=True, timeout=0.25)
+        if msg is not None:
+            break
+        await asyncio.sleep(0.05)
+
     await pubsub.unsubscribe("nidan:stream:events")
     await client.aclose()
 
