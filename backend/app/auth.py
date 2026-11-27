@@ -19,10 +19,11 @@ import time
 from typing import Any, Literal
 
 import httpx
-from fastapi import Depends, Request
+from fastapi import Depends, Request, WebSocket
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import ExpiredSignatureError, JWTError, jwt
 from pydantic import BaseModel, Field
+from starlette.requests import HTTPConnection
 
 from app.config import Settings, get_settings
 from app.middleware import ApiProblemException
@@ -67,8 +68,8 @@ def clear_jwks_cache() -> None:
     _jwks_cache.clear()
 
 
-def _resolve_settings(request: Request) -> Settings:
-    cfg = getattr(request.app.state, "settings", None)
+def _resolve_settings(conn: HTTPConnection) -> Settings:
+    cfg = getattr(conn.app.state, "settings", None)
     if isinstance(cfg, Settings):
         return cfg
     return get_settings()
@@ -81,8 +82,8 @@ def _jwks_url(settings: Settings) -> str:
     return f"{issuer}/.well-known/jwks.json"
 
 
-async def _get_jwks(request: Request, settings: Settings) -> dict[str, Any]:
-    override = getattr(request.app.state, "jwks_override", None)
+async def _get_jwks(conn: HTTPConnection, settings: Settings) -> dict[str, Any]:
+    override = getattr(conn.app.state, "jwks_override", None)
     if isinstance(override, dict):
         return override
 
@@ -182,9 +183,9 @@ def _select_signing_key(token: str, jwks: dict[str, Any]) -> dict[str, Any]:
     return jwks
 
 
-async def _verify_jwt(request: Request, token: str, settings: Settings) -> NidanPrincipal:
+async def _verify_jwt(conn: HTTPConnection, token: str, settings: Settings) -> NidanPrincipal:
     """Verify a Bearer JWT against JWKS and return a NidanPrincipal."""
-    jwks = await _get_jwks(request, settings)
+    jwks = await _get_jwks(conn, settings)
     signing_key = _select_signing_key(token, jwks)
     try:
         payload = jwt.decode(
@@ -291,3 +292,27 @@ async def require_service_role(
     principal = await _verify_jwt(request, credentials.credentials, settings)
     principal.assert_role("service", "admin")
     return principal
+
+
+async def verify_websocket_principal(websocket: WebSocket) -> NidanPrincipal:
+    """Authenticate a WebSocket handshake via Bearer header or ?token= query param."""
+    settings = _resolve_settings(websocket)
+    if settings.auth_mode == "dev":
+        return NidanPrincipal(**_DEV_OPERATOR)
+
+    auth_header = websocket.headers.get("authorization", "")
+    token = ""
+    if auth_header.lower().startswith("bearer "):
+        token = auth_header[7:].strip()
+    if not token:
+        token = websocket.query_params.get("token", "").strip()
+
+    if not token:
+        raise ApiProblemException(
+            status=401,
+            title="Authentication required",
+            detail="WebSocket stream requires a Bearer token.",
+            error_type="urn:nidan:unauthorized",
+        )
+
+    return await _verify_jwt(websocket, token, settings)

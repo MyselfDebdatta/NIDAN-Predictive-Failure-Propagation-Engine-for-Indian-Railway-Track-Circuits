@@ -15,16 +15,26 @@ class SummaryService:
     def __init__(self, repo: NidanRepository) -> None:
         self.repo = repo
 
-    async def get_kpis(self) -> dict[str, Any]:
-        return await self.repo.get_kpi_summary()
+    async def get_kpis(self, *, divisions: list[str] | None = None) -> dict[str, Any]:
+        return await self.repo.get_kpi_summary(divisions=divisions)
 
     async def create_work_order_draft(
-        self, *, alert_id: str, action: str, block_id: str
+        self,
+        *,
+        alert_id: str,
+        action: str,
+        block_id: str,
+        actor_sub: str | None = None,
+        actor_role: str | None = None,
+        request_id: str | None = None,
     ) -> dict[str, Any]:
         draft = await self.repo.create_work_order_draft(
             alert_id=alert_id,
             action=action,
             block_id=block_id,
+            actor_sub=actor_sub,
+            actor_role=actor_role,
+            request_id=request_id,
         )
         if draft is None:
             raise ApiProblemException(

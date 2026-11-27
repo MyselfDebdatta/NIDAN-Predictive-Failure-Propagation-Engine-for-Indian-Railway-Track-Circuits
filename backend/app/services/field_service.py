@@ -21,12 +21,21 @@ class FieldService:
         return await self.repo.get_field_tasks()
 
     async def submit_observation(
-        self, *, idempotency_key: str, payload: dict[str, Any]
+        self,
+        *,
+        idempotency_key: str,
+        payload: dict[str, Any],
+        actor_sub: str | None = None,
+        actor_role: str | None = None,
+        request_id: str | None = None,
     ) -> dict[str, Any]:
         try:
             receipt, replayed = await self.repo.submit_observation(
                 idempotency_key=idempotency_key,
                 payload=payload,
+                actor_sub=actor_sub,
+                actor_role=actor_role,
+                request_id=request_id,
             )
         except ApiProblemException as exc:
             if exc.status == 409:

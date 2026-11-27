@@ -44,6 +44,7 @@ class Settings(BaseSettings):
     oidc_issuer: str = Field(default="", validation_alias="OIDC_ISSUER")
     oidc_audience: str = Field(default="nidan-api", validation_alias="OIDC_AUDIENCE")
     oidc_jwks_url: str = Field(default="", validation_alias="OIDC_JWKS_URL")
+    rate_limit_per_min: int = Field(default=0, validation_alias="RATE_LIMIT_PER_MIN")
 
     cors_origins_raw: str = Field(
         default="http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173",

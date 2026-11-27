@@ -15,6 +15,8 @@ class MetricsRegistry:
         self._http_duration_sum: dict[tuple[str, str], float] = defaultdict(float)
         self._http_duration_count: dict[tuple[str, str], int] = defaultdict(int)
         self._observations: dict[str, int] = defaultdict(int)
+        self._telemetry_samples: dict[str, int] = defaultdict(int)
+        self._model_runs: dict[str, int] = defaultdict(int)
 
     def record_http(self, method: str, path: str, status: int, duration_s: float) -> None:
         with self._lock:
@@ -26,6 +28,16 @@ class MetricsRegistry:
         """Record field observation outcome: created | replayed | conflict."""
         with self._lock:
             self._observations[outcome] += 1
+
+    def record_telemetry(self, quality_label: str, count: int = 1) -> None:
+        """Record ingested telemetry sample counts by quality: measured|interpolated|suspect."""
+        with self._lock:
+            self._telemetry_samples[quality_label] += count
+
+    def record_model_run(self, status: str) -> None:
+        """Record model_run outcome: succeeded | replayed | failed."""
+        with self._lock:
+            self._model_runs[status] += 1
 
     def render_prometheus(
         self,
@@ -73,6 +85,26 @@ class MetricsRegistry:
             for outcome in ("created", "replayed", "conflict"):
                 val = self._observations[outcome]
                 lines.append(f'nidan_field_observations_total{{outcome="{outcome}"}} {val}')
+
+            lines.extend(
+                [
+                    "# HELP nidan_telemetry_samples_total Telemetry samples ingested by QC class.",
+                    "# TYPE nidan_telemetry_samples_total counter",
+                ]
+            )
+            for q_label in ("measured", "interpolated", "suspect"):
+                val = self._telemetry_samples[q_label]
+                lines.append(f'nidan_telemetry_samples_total{{quality="{q_label}"}} {val}')
+
+            lines.extend(
+                [
+                    "# HELP nidan_model_runs_total Atomic model-run publish outcomes.",
+                    "# TYPE nidan_model_runs_total counter",
+                ]
+            )
+            for status in ("succeeded", "replayed", "failed"):
+                val = self._model_runs[status]
+                lines.append(f'nidan_model_runs_total{{status="{status}"}} {val}')
 
         lines.extend(
             [

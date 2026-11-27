@@ -170,6 +170,7 @@ jobs:
           psql -h localhost -U nidan -d nidan -v ON_ERROR_STOP=1 -f db/0001_init.sql
           psql -h localhost -U nidan -d nidan -v ON_ERROR_STOP=1 -f db/seed.sql
           python -m alembic stamp 0001
+          python -m alembic upgrade head
           python -m alembic current
 
       - name: Run live Postgres + Redis integration tests

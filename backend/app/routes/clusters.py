@@ -5,10 +5,11 @@ from __future__ import annotations
 import json
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, Request, Response
 
 from app.auth import NidanPrincipal, get_current_principal, require_operator_or_above
 from app.cache import RedisCache
+from app.middleware import get_trace_id
 from app.models.clusters import Cluster, ClusterMergeRequest, ClusterMergeResponse
 from app.models.common import ModelVersions, utc_now_iso
 from app.routes.deps import get_cache, get_cluster_service
@@ -52,13 +53,20 @@ async def list_clusters(
 async def merge_alerts_to_cluster(
     cluster_id: str,
     body: ClusterMergeRequest,
+    request: Request,
     response: Response,
-    _principal: Annotated[NidanPrincipal, Depends(require_operator_or_above)],
+    principal: Annotated[NidanPrincipal, Depends(require_operator_or_above)],
     service: Annotated[ClusterService, Depends(get_cluster_service)],
     cache: Annotated[RedisCache, Depends(get_cache)],
 ):
     """Fold alerts into an existing common-cause cluster."""
     response.headers["Cache-Control"] = "no-store"
-    result = await service.merge_cluster(cluster_id, body.alert_ids)
+    result = await service.merge_cluster(
+        cluster_id,
+        body.alert_ids,
+        actor_sub=principal.sub,
+        actor_role=principal.role,
+        request_id=get_trace_id(request),
+    )
     await cache.invalidate_prefixes("alerts:", "summary:")
     return result
