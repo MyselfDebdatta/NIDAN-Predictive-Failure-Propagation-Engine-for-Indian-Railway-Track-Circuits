@@ -15,6 +15,8 @@ import numpy as np
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+_AI_ROOT = Path(__file__).resolve().parents[1]
+
 # Version pins. Bump deliberately; each appears in every model_versions record.
 CODE_VERSION = "nidan-ai/0.1.0"
 TWIN_VERSION = "0.3.1"
@@ -100,8 +102,8 @@ class Settings(BaseSettings):
     max_retries: int = 3
     retry_backoff_seconds: float = 0.5
 
-    artifact_dir: Path = Field(default=Path("artifacts"))
-    report_dir: Path = Field(default=Path("reports"))
+    artifact_dir: Path = Field(default=_AI_ROOT / "artifacts")
+    report_dir: Path = Field(default=_AI_ROOT / "reports")
 
     critical_h24: float = CRITICAL_H24
     warning_h72: float = WARNING_H72

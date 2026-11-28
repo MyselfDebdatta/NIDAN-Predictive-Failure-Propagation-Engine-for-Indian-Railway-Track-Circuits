@@ -127,33 +127,43 @@ class ModeClassifier:
         probabilities = self.predict_proba(row)[0]
         return {label: float(probabilities[index]) for index, label in enumerate(self.classes)}
 
-    def shap_top(self, vector: FeatureVector, top_k: int = 5) -> list[dict[str, float | str]]:
+    def shap_top(
+        self,
+        vector: FeatureVector,
+        top_k: int = 5,
+        *,
+        precomputed_probs: np.ndarray | None = None,
+    ) -> list[dict[str, float | str]]:
         """Deterministic signed permutation attribution (TreeSHAP-compatible interface).
 
         TreeSHAP is used when the fitted estimator exposes it; otherwise the deterministic
         permutation fallback is used. Values are signed contributions, not global importance.
         """
         row = vector.array(self.feature_names)
-        probabilities = self.predict_proba(row.reshape(1, -1))[0]
+        if precomputed_probs is None:
+            batch = np.tile(row, (len(self.feature_names) + 1, 1))
+            for index in range(len(self.feature_names)):
+                batch[index + 1, index] = self.baseline[index]
+            all_probs = self.predict_proba(batch)
+            probabilities = all_probs[0]
+            perturbed_probs = all_probs[1:]
+        else:
+            probabilities = precomputed_probs[0]
+            perturbed_probs = precomputed_probs[1:]
         target_index = int(np.argmax(probabilities))
-        baseline_row = row.copy()
-        contributions: list[tuple[float, str]] = []
-        for index, name in enumerate(self.feature_names):
-            replaced = baseline_row.copy()
-            replaced[index] = self.baseline[index]
-            changed = float(self.predict_proba(replaced.reshape(1, -1))[0, target_index])
-            contributions.append((float(probabilities[target_index] - changed), name))
+        contributions = [
+            (float(probabilities[target_index] - perturbed_probs[index, target_index]), name)
+            for index, name in enumerate(self.feature_names)
+        ]
         contributions.sort(key=lambda item: (-abs(item[0]), item[1]))
-        result: list[dict[str, float | str]] = []
-        for value, name in contributions[:top_k]:
-            result.append(
-                {
-                    "feature": name,
-                    "label": FEATURE_LABELS.get(name, name),
-                    "value": float(value),
-                }
-            )
-        return result
+        return [
+            {
+                "feature": name,
+                "label": FEATURE_LABELS.get(name, name),
+                "value": float(value),
+            }
+            for value, name in contributions[:top_k]
+        ]
 
 
 @dataclass(slots=True)
@@ -344,28 +354,29 @@ def _macro_f1(truth: np.ndarray, predictions: np.ndarray, classes: list[str]) ->
     return float(np.mean(scores)) if scores else 0.0
 
 
-def diagnose_with_set(
+def _format_diagnosis(
     bundle: DiagnosisBundle,
     vector: FeatureVector,
+    probability_row: np.ndarray,
+    shap_top: list[dict[str, float | str]],
     *,
     group: str | None = None,
     max_set_size: int = 3,
 ) -> dict[str, object]:
-    """Return likely modes, probabilities, conformal set and signed SHAP features."""
-    probabilities = bundle.classifier.diagnose(vector)
+    probabilities = {
+        label: float(probability_row[index])
+        for index, label in enumerate(bundle.classifier.classes)
+    }
     ranked = sorted(probabilities.items(), key=lambda item: (-item[1], item[0]))
-    probability_row = np.array([probabilities[label] for label in bundle.classifier.classes])
     full_set = bundle.conformal.predict_set(probability_row, group)
     capped = full_set[:max_set_size]
     likely = [label for label, _ in ranked[:3]]
-    # The model explanation's mode set must equal the conformal set; cap and keep order.
     mode_set = [label for label in likely if label in capped] or capped[:1] or likely[:1]
     if not mode_set:
         mode_set = likely[:1]
     top = likely[0]
     coverage = bundle.coverage
     if len(full_set) > max_set_size:
-        # Honest fallback: the capped set's empirical coverage is lower than nominal.
         coverage = float(max(0.0, bundle.coverage - 0.04 * (len(full_set) - max_set_size)))
     return {
         "probabilities": probabilities,
@@ -376,8 +387,61 @@ def diagnose_with_set(
         "mode_set_coverage": float(coverage),
         "set_size": len(mode_set),
         "capped": len(full_set) > max_set_size,
-        "shap_top": bundle.classifier.shap_top(vector, top_k=5),
+        "shap_top": shap_top,
     }
+
+
+def diagnose_with_set(
+    bundle: DiagnosisBundle,
+    vector: FeatureVector,
+    *,
+    group: str | None = None,
+    max_set_size: int = 3,
+) -> dict[str, object]:
+    """Return likely modes, probabilities, conformal set and signed SHAP features."""
+    row = vector.array(bundle.classifier.feature_names)
+    n_feat = len(bundle.classifier.feature_names)
+    batch = np.tile(row, (n_feat + 1, 1))
+    for index in range(n_feat):
+        batch[index + 1, index] = bundle.classifier.baseline[index]
+    all_probs = bundle.classifier.predict_proba(batch)
+    shap = bundle.classifier.shap_top(vector, top_k=5, precomputed_probs=all_probs)
+    return _format_diagnosis(
+        bundle, vector, all_probs[0], shap, group=group, max_set_size=max_set_size
+    )
+
+
+def diagnose_batch(
+    bundle: DiagnosisBundle,
+    vectors: list[FeatureVector],
+    groups: list[str | None],
+    *,
+    max_set_size: int = 3,
+) -> list[dict[str, object]]:
+    """Batch diagnosis + SHAP across many circuits in one classifier call."""
+    if not vectors:
+        return []
+    n_feat = len(bundle.classifier.feature_names)
+    stride = n_feat + 1
+    blocks = np.empty((len(vectors) * stride, n_feat), dtype=float)
+    for idx, vector in enumerate(vectors):
+        row = vector.array(bundle.classifier.feature_names)
+        base = idx * stride
+        blocks[base] = row
+        pert = blocks[base + 1 : base + stride]
+        pert[:] = row
+        np.fill_diagonal(pert, bundle.classifier.baseline)
+    all_probs = bundle.classifier.predict_proba(blocks)
+    results: list[dict[str, object]] = []
+    for idx, (vector, group) in enumerate(zip(vectors, groups, strict=True)):
+        chunk = all_probs[idx * stride : (idx + 1) * stride]
+        shap = bundle.classifier.shap_top(vector, top_k=5, precomputed_probs=chunk)
+        results.append(
+            _format_diagnosis(
+                bundle, vector, chunk[0], shap, group=group, max_set_size=max_set_size
+            )
+        )
+    return results
 
 
 def corpus_snapshot_as_of(stream, day: int):

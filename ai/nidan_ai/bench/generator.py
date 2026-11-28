@@ -31,7 +31,12 @@ _STATIONS = (
     ("ROU", "ROU", "Up Main"),
     ("JSG", "JSG", "Down Main"),
 )
-_WEATHER_CELLS = ("wx-20.30N-85.83E", "wx-22.10N-86.20E", "wx-19.80N-85.10E")
+_WEATHER_CELLS = (
+    "wx-20.30N-85.83E",
+    "wx-22.33N-87.32E",
+    "wx-22.80N-86.20E",
+    "wx-23.24N-87.07E",
+)
 
 
 @dataclass(frozen=True, slots=True)

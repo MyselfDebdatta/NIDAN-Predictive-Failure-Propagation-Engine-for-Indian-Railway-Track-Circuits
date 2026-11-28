@@ -44,6 +44,12 @@ class AssetGraph:
 
     assets: dict[str, AssetSpec]
     edges: list[GraphEdge] = field(default_factory=list)
+    _adj: dict[str, list[GraphEdge]] = field(default_factory=dict, repr=False)
+
+    def _add_edge(self, edge: GraphEdge) -> None:
+        self.edges.append(edge)
+        self._adj.setdefault(edge.source, []).append(edge)
+        self._adj.setdefault(edge.target, []).append(edge)
 
     @classmethod
     def from_assets(
@@ -54,63 +60,46 @@ class AssetGraph:
     ) -> AssetGraph:
         graph = cls(assets={asset.asset_id: asset for asset in assets})
         ids = sorted(graph.assets)
-        for i, source in enumerate(ids):
-            for target in ids[i + 1 :]:
-                left, right = graph.assets[source], graph.assets[target]
-                if left.weather_cell == right.weather_cell:
-                    graph.edges.append(
-                        GraphEdge(
-                            "weather_cell",
-                            source,
-                            target,
-                            left.weather_cell,
-                            "same weather cell",
-                        )
-                    )
-                if left.supply_id == right.supply_id:
-                    graph.edges.append(
-                        GraphEdge("shared_asset", source, target, left.supply_id, "shared supply")
-                    )
-                if left.cable_id == right.cable_id:
-                    graph.edges.append(
-                        GraphEdge("shared_asset", source, target, left.cable_id, "shared cable")
-                    )
-                if left.relay_room == right.relay_room:
-                    graph.edges.append(
-                        GraphEdge(
-                            "shared_asset", source, target, left.relay_room, "shared relay room"
-                        )
-                    )
-                if left.route == right.route:
-                    graph.edges.append(
-                        GraphEdge(
-                            "route_dependency",
-                            source,
-                            target,
-                            f"{left.station}:{left.route}",
-                            "same route (read-only topology)",
-                        )
-                    )
+        buckets: dict[tuple[str, str, str], list[str]] = {}
+        for aid in ids:
+            a = graph.assets[aid]
+            buckets.setdefault(("weather_cell", a.weather_cell, "same weather cell"), []).append(
+                aid
+            )
+            buckets.setdefault(("shared_asset", a.supply_id, "shared supply"), []).append(aid)
+            buckets.setdefault(("shared_asset", a.cable_id, "shared cable"), []).append(aid)
+            buckets.setdefault(("shared_asset", a.relay_room, "shared relay room"), []).append(aid)
+            buckets.setdefault(
+                ("route_dependency", f"{a.station}:{a.route}", "same route (read-only topology)"),
+                [],
+            ).append(aid)
+        for (kind, edge_id, note), members in buckets.items():
+            if len(members) < 2:
+                continue
+            for i, source in enumerate(members):
+                for target in members[i + 1 :]:
+                    graph._add_edge(GraphEdge(kind, source, target, edge_id, note))
         for source, target, job_id in work_history or []:
             if source in graph.assets and target in graph.assets and source != target:
-                graph.edges.append(
+                graph._add_edge(
                     GraphEdge("work_history", source, target, job_id, "shared work history")
                 )
         return graph
 
     def neighbours(self, asset_id: str, kind: str | None = None) -> list[str]:
         found: set[str] = set()
-        for edge in self.edges:
+        for edge in self._adj.get(asset_id, ()):
             if kind is not None and edge.kind != kind:
                 continue
-            if edge.source == asset_id:
-                found.add(edge.target)
-            elif edge.target == asset_id:
-                found.add(edge.source)
+            found.add(edge.target if edge.source == asset_id else edge.source)
         return sorted(found)
 
     def shared_ids(self, asset_id: str, other: str) -> list[GraphEdge]:
-        return [edge for edge in self.edges if {edge.source, edge.target} == {asset_id, other}]
+        return [
+            edge
+            for edge in self._adj.get(asset_id, ())
+            if edge.source == other or edge.target == other
+        ]
 
 
 @dataclass(slots=True)
@@ -632,14 +621,17 @@ def cluster_candidates(
         root = max(component, key=lambda asset_id: (risks[asset_id], asset_id))
         shared_edges: list[dict[str, str]] = []
         seen: set[tuple[str, str]] = set()
-        for i, left in enumerate(component):
-            for right in component[i + 1 :]:
-                for edge in graph.shared_ids(left, right):
-                    key = (edge.kind, edge.id)
-                    if key in seen:
-                        continue
-                    seen.add(key)
-                    shared_edges.append({"kind": edge.kind, "id": edge.id, "note": edge.note})
+        comp_set = set(component)
+        for member in component:
+            for edge in graph._adj.get(member, ()):
+                other = edge.target if edge.source == member else edge.source
+                if other not in comp_set:
+                    continue
+                key = (edge.kind, edge.id)
+                if key in seen:
+                    continue
+                seen.add(key)
+                shared_edges.append({"kind": edge.kind, "id": edge.id, "note": edge.note})
         shared_edges.sort(key=lambda item: (item["kind"], item["id"]))
         kind = shared_edges[0]["kind"] if shared_edges else "shared_asset"
         cluster_id = "c-" + stable_id("cluster", sorted(component), root, window_label, 8)
