@@ -126,10 +126,11 @@ class ConformalRUL:
     def fit(self, predicted_days: np.ndarray, observed_days: np.ndarray) -> ConformalRUL:
         predicted = np.maximum(np.asarray(predicted_days, dtype=float), 1.0)
         observed = np.maximum(np.asarray(observed_days, dtype=float), 1.0)
-        residuals = np.log(observed) - np.log(predicted)
+        residuals = np.abs(np.log(observed) - np.log(predicted))
         alpha = 1.0 - self.nominal
-        self.lower_offset = conformal_quantile(-residuals, alpha / 2.0)
-        self.upper_offset = conformal_quantile(residuals, alpha / 2.0)
+        offset = conformal_quantile(residuals, alpha)
+        self.lower_offset = offset
+        self.upper_offset = offset
         self.n_calibration = int(residuals.size)
         return self
 
@@ -164,7 +165,7 @@ class IsotonicCalibrator:
     def fit(self, predictions: np.ndarray, outcomes: np.ndarray) -> IsotonicCalibrator:
         predictions = np.asarray(predictions, dtype=float)
         outcomes = np.asarray(outcomes, dtype=float)
-        if predictions.size < 8 or np.unique(outcomes).size < 2:
+        if predictions.size < 20 or np.unique(outcomes).size < 2 or int(np.sum(outcomes == 1)) < 12:
             self.x = np.array([0.0, 1.0])
             self.y = np.array([0.0, 1.0])
             self.fitted = False
@@ -203,13 +204,15 @@ class HorizonCalibrator:
         predictions: dict[str, np.ndarray],
         outcomes: dict[str, np.ndarray],
         zones: np.ndarray,
+        *,
+        min_zone_size: int = 80,
     ) -> HorizonCalibrator:
         zones = np.asarray(zones)
         for horizon in ("h24", "h72", "h7d"):
             self.pooled[horizon] = IsotonicCalibrator().fit(predictions[horizon], outcomes[horizon])
             for zone in sorted(set(zones.tolist())):
                 mask = zones == zone
-                if int(mask.sum()) >= 40:
+                if int(mask.sum()) >= min_zone_size:
                     self.by_zone.setdefault(str(zone), {})[horizon] = IsotonicCalibrator().fit(
                         predictions[horizon][mask], outcomes[horizon][mask]
                     )
@@ -232,17 +235,22 @@ class HorizonCalibrator:
 
 
 def monotone_projection(risk: dict[str, float]) -> dict[str, float]:
-    """Enforce h24 <= h72 <= h7d after calibration (pool-adjacent-violators, 3 points)."""
-    values = [float(risk["h24"]), float(risk["h72"]), float(risk["h7d"])]
-    # Three-point isotonic projection.
-    if values[0] > values[1]:
-        values[0] = values[1] = (values[0] + values[1]) / 2.0
-    if values[1] > values[2]:
-        values[1] = values[2] = (values[1] + values[2]) / 2.0
-    if values[0] > values[1]:
-        values[0] = values[1] = (values[0] + values[1]) / 2.0
+    """Enforce h24 <= h72 <= h7d via exact Pool-Adjacent-Violators (PAVA)."""
+    blocks: list[list[float]] = [[float(risk["h24"])], [float(risk["h72"])], [float(risk["h7d"])]]
+    i = 0
+    while i < len(blocks) - 1:
+        mean_i = sum(blocks[i]) / len(blocks[i])
+        mean_next = sum(blocks[i + 1]) / len(blocks[i + 1])
+        if mean_i > mean_next:
+            blocks[i].extend(blocks[i + 1])
+            blocks.pop(i + 1)
+            if i > 0:
+                i -= 1
+        else:
+            i += 1
+    projected = [sum(block) / len(block) for block in blocks for _ in block]
     return {
-        "h24": float(np.clip(values[0], 0.0, 1.0)),
-        "h72": float(np.clip(values[1], 0.0, 1.0)),
-        "h7d": float(np.clip(values[2], 0.0, 1.0)),
+        "h24": float(np.clip(projected[0], 0.0, 1.0)),
+        "h72": float(np.clip(projected[1], 0.0, 1.0)),
+        "h7d": float(np.clip(projected[2], 0.0, 1.0)),
     }
