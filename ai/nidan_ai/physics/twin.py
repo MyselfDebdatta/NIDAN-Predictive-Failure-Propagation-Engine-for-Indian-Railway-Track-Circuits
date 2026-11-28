@@ -18,9 +18,24 @@ import numpy as np
 
 from nidan_ai.physics.line import LineParams, dry_current, invert_ballast
 
-_LOG_GB_BOUNDS = (np.log(1.0 / 500.0), np.log(1.0 / 0.05))
-_LOG_R_BOUNDS = (np.log(0.01), np.log(10.0))
-_LOG_FEED_BOUNDS = (np.log(0.5), np.log(1.5))
+_LOG_GB_MIN = float(np.log(1.0 / 500.0))
+_LOG_GB_MAX = float(np.log(1.0 / 0.05))
+_LOG_R_MIN = float(np.log(0.01))
+_LOG_R_MAX = float(np.log(10.0))
+_LOG_FEED_MIN = float(np.log(0.5))
+_LOG_FEED_MAX = float(np.log(1.5))
+
+_N_STATE = 3
+_ALPHA = 0.3
+_BETA = 2.0
+_KAPPA = 0.0
+_LAMBDA = _ALPHA * _ALPHA * (_N_STATE + _KAPPA) - _N_STATE
+_SCALE = _N_STATE + _LAMBDA
+_WM = np.full(2 * _N_STATE + 1, 1.0 / (2.0 * _SCALE))
+_WC = _WM.copy()
+_WM[0] = _LAMBDA / _SCALE
+_WC[0] = _LAMBDA / _SCALE + (1.0 - _ALPHA * _ALPHA + _BETA)
+_JITTER = 1e-12 * np.eye(_N_STATE)
 
 
 @dataclass(slots=True)
@@ -58,30 +73,23 @@ class TwinResult:
 
 
 def _sigma_points(x: np.ndarray, p: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    n = x.size
-    alpha, beta, kappa = 0.3, 2.0, 0.0
-    lam = alpha * alpha * (n + kappa) - n
-    scale = n + lam
-    wm = np.full(2 * n + 1, 1.0 / (2.0 * scale))
-    wc = wm.copy()
-    wm[0] = lam / scale
-    wc[0] = lam / scale + (1.0 - alpha * alpha + beta)
-    jitter = 1e-12 * np.eye(n)
-    root = np.linalg.cholesky((scale) * (p + jitter))
-    points = np.empty((2 * n + 1, n))
+    root = np.linalg.cholesky(_SCALE * (p + _JITTER))
+    points = np.empty((7, 3))
     points[0] = x
-    for i in range(n):
-        points[1 + i] = x + root[:, i]
-        points[1 + n + i] = x - root[:, i]
-    return points, wm, wc
+    points[1:4] = x + root.T
+    points[4:7] = x - root.T
+    return points, _WM, _WC
 
 
 def _clip_state(x: np.ndarray) -> np.ndarray:
-    x = x.copy()
-    x[0] = np.clip(x[0], *_LOG_GB_BOUNDS)
-    x[1] = np.clip(x[1], *_LOG_R_BOUNDS)
-    x[2] = np.clip(x[2], *_LOG_FEED_BOUNDS)
-    return x
+    return np.array(
+        [
+            min(max(float(x[0]), _LOG_GB_MIN), _LOG_GB_MAX),
+            min(max(float(x[1]), _LOG_R_MIN), _LOG_R_MAX),
+            min(max(float(x[2]), _LOG_FEED_MIN), _LOG_FEED_MAX),
+        ],
+        dtype=float,
+    )
 
 
 def _measurement_relay(x: np.ndarray, params: LineParams) -> float:
