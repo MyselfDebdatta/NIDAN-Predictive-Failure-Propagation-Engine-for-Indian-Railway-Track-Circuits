@@ -1,0 +1,25 @@
+# Generated artefacts, datasets, checkpoints and reports are never committed.
+/artifacts/
+/reports/
+/data/
+/datasets/
+/checkpoints/
+*.joblib
+*.pkl
+*.npz
+*.npy
+*.parquet
+*.sqlite
+*.sqlite3
+.env
+.env.*
+!.env.example
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+*.egg-info/
