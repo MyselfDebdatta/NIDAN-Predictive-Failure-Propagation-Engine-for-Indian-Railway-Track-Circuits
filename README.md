@@ -24,6 +24,7 @@ This repository holds five things:
 ├─ README.md                                        this file
 ├─ docs/
 │  ├─ Frontend-Complete-Research-Implementation.md  product + front-end specification (the contract)
+│  ├─ AI-ML-Implementation-Spec.md                  engine behind the backend contract
 │  ├─ Lovable-Instruction-Frontend-Build.md         build brief for the generated front end
 │  ├─ Lovable-Frontend-Audit.md                     audit of the generated app against the spec
 │  ├─ Exhibition-Registration-Form-Answers.md       exhibition form answers, research-backed
@@ -110,6 +111,7 @@ points or track-circuit command path.
 | The working app | [`Nidan-Frontend/`](Nidan-Frontend/) — run it as above |
 | The product argument and seven screens (static) | [`design/mockups/pages/index.html`](design/mockups/pages/index.html) |
 | The implementation specification | [`docs/Frontend-Complete-Research-Implementation.md`](docs/Frontend-Complete-Research-Implementation.md) |
+| The AI/ML engine specification | [`docs/AI-ML-Implementation-Spec.md`](docs/AI-ML-Implementation-Spec.md) |
 | The front-end audit and fix log | [`docs/Lovable-Frontend-Audit.md`](docs/Lovable-Frontend-Audit.md) |
 | The logo and brand guidelines | [`design/brand/Logo-and-Brand-Guidelines.md`](design/brand/Logo-and-Brand-Guidelines.md) |
 | Exhibition registration answers | [`docs/Exhibition-Registration-Form-Answers.md`](docs/Exhibition-Registration-Form-Answers.md) |
