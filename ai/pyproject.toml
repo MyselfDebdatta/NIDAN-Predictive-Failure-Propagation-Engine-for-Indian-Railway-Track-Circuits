@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "NIDAN physics-twin and machine-learning scoring engine (advisory, non-vital)"
 readme = "README.md"
 requires-python = ">=3.12"
-license = "Proprietary"
+license = { text = "Proprietary" }
 dependencies = [
   "numpy>=1.26",
   "pandas>=2.2",
