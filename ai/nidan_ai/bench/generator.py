@@ -127,11 +127,12 @@ def _make_assets(scenario: Scenario, seed: int, division: str | None) -> list[As
     assets: list[AssetSpec] = []
     for index in range(scenario.asset_count):
         station, station_division, route = stations[index % len(stations)]
+        per_station_index = index // len(stations)
         chosen_division = division or station_division
-        weather_cell = _WEATHER_CELLS[index % len(_WEATHER_CELLS)]
-        relay_room = f"{station}/RR/{1 + index % 2}"
-        supply_id = f"{station}/IPS/{1 + index % 2}"
-        cable_id = f"{station}/CBL/{1 + index % 3}"
+        weather_cell = _WEATHER_CELLS[(index % len(stations)) % len(_WEATHER_CELLS)]
+        relay_room = f"{station}/RR/{1 + per_station_index % 2}"
+        supply_id = f"{station}/IPS/{1 + per_station_index % 2}"
+        cable_id = f"{station}/CBL/{1 + per_station_index % 2}"
         length = float(rng.uniform(0.30, 1.50))
         rail = float(rng.uniform(0.05, 0.20))
         dry_ballast = float(rng.uniform(4.0, 20.0))

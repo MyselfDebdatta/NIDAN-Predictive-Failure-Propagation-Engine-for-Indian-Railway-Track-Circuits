@@ -52,8 +52,8 @@ class Scenario:
 _DEFINITIONS: dict[str, dict[str, Any]] = {
     "monsoon-60d": {
         "days": 60,
-        "asset_count": 8,
-        "station_count": 2,
+        "asset_count": 12,
+        "station_count": 4,
         "event_day": 59,
         "event_mode": "F1",
         "primary_use": "T1 lead time and the exhibition demonstration",
@@ -83,8 +83,8 @@ _DEFINITIONS: dict[str, dict[str, Any]] = {
     },
     "lightning-cluster": {
         "days": 60,
-        "asset_count": 8,
-        "station_count": 2,
+        "asset_count": 12,
+        "station_count": 4,
         "event_day": 40,
         "event_mode": "F7",
         "primary_use": "T3 common-cause clustering",
@@ -102,8 +102,8 @@ _DEFINITIONS: dict[str, dict[str, Any]] = {
     },
     "supply-sag": {
         "days": 60,
-        "asset_count": 6,
-        "station_count": 1,
+        "asset_count": 9,
+        "station_count": 3,
         "event_day": 35,
         "event_mode": "F6",
         "primary_use": "T3 and T5 correlated supply dips",
@@ -159,8 +159,8 @@ _DEFINITIONS: dict[str, dict[str, Any]] = {
     },
     "cable-ingress": {
         "days": 60,
-        "asset_count": 6,
-        "station_count": 1,
+        "asset_count": 9,
+        "station_count": 3,
         "event_day": 50,
         "event_mode": "F8",
         "primary_use": "T2 and T4 cable insulation decline",
