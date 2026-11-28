@@ -162,3 +162,51 @@ def bootstrap_ci(
         [statistic(rng.choice(values, size=values.size, replace=True)) for _ in range(n_bootstrap)]
     )
     return (float(np.quantile(samples, alpha / 2)), float(np.quantile(samples, 1 - alpha / 2)))
+
+
+def _coverage_gap_by_group(
+    covered: list[bool], groups: list[str], *, min_support: int = 5
+) -> tuple[float, dict[str, float]]:
+    """Compute max-min subgroup coverage across groups meeting ``min_support``."""
+    if not covered or len(covered) != len(groups):
+        return (0.0, {})
+    buckets: dict[str, list[bool]] = {}
+    for flag, group in zip(covered, groups, strict=True):
+        buckets.setdefault(str(group), []).append(bool(flag))
+    per_group = {
+        group: float(np.mean(flags))
+        for group, flags in sorted(buckets.items())
+        if len(flags) >= min_support
+    }
+    if len(per_group) < 2:
+        return (0.0, per_group)
+    values = list(per_group.values())
+    return (float(max(values) - min(values)), per_group)
+
+
+def division_coverage_gap(
+    sets: list[list[str]],
+    labels: list[str],
+    divisions: list[str],
+    *,
+    min_support: int = 5,
+) -> tuple[float, dict[str, float]]:
+    """Max-min conformal set coverage gap across railway divisions (spec §12.1 / §13)."""
+    covered = [label in pred for pred, label in zip(sets, labels, strict=True)]
+    return _coverage_gap_by_group(covered, divisions, min_support=min_support)
+
+
+def division_interval_coverage_gap(
+    low: np.ndarray,
+    high: np.ndarray,
+    observed: np.ndarray,
+    divisions: list[str],
+    *,
+    min_support: int = 5,
+) -> tuple[float, dict[str, float]]:
+    """Max-min conformal RUL interval coverage gap across railway divisions."""
+    low_arr = np.asarray(low, dtype=float)
+    high_arr = np.asarray(high, dtype=float)
+    obs_arr = np.asarray(observed, dtype=float)
+    covered = [bool(lo <= y <= hi) for lo, hi, y in zip(low_arr, high_arr, obs_arr, strict=True)]
+    return _coverage_gap_by_group(covered, divisions, min_support=min_support)

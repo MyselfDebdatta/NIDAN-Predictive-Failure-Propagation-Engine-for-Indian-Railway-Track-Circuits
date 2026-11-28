@@ -52,6 +52,7 @@ from nidan_ai.eval.report import (
     write_metrics_json,
     write_model_card,
 )
+from nidan_ai.eval.shadow import ModelRegistry, ShadowObservation
 from nidan_ai.explain.narrative import agreement, model_narrative, physics_narrative
 from nidan_ai.explain.precedents import PrecedentIndex
 from nidan_ai.models.anomaly import AnomalyDetector
@@ -163,6 +164,21 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         action="store_true",
         help="Force refit instead of reading cached artifacts.",
     )
+    parser.add_argument(
+        "--shadow",
+        action="store_true",
+        help="Evaluate in shadow mode and update registry without publishing.",
+    )
+    parser.add_argument(
+        "--promote-check",
+        action="store_true",
+        help="Evaluate all spec §13 promotion gates (requires >=28d shadow window) in registry.",
+    )
+    parser.add_argument(
+        "--registry-path",
+        default=None,
+        help="Path to local JSON model registry (defaults to artifacts/registry.json).",
+    )
     return parser.parse_args(argv)
 
 
@@ -253,7 +269,7 @@ def load_or_fit_bundle(
 ) -> EngineBundle:
     """Load cached deterministic bundle or fit and persist under gitignored artifacts/."""
     safe_ver = CODE_VERSION.replace("/", "_")
-    cache_path = settings.artifact_dir / f"bundle-{safe_ver}-s{seed}-{bench_hash[:12]}.pkl"
+    cache_path = settings.artifact_dir / f"bundle-{safe_ver}-v2-s{seed}-{bench_hash[:12]}.pkl"
     if use_cache and cache_path.exists():
         with cache_path.open("rb") as handle:
             return pickle.load(handle)
@@ -461,9 +477,16 @@ def run_scoring_pipeline(
         bench_hash = sha256_canonical({"source": dataset.source, "assets": dataset.asset_ids()})
         bench_version = BENCH_VERSION
     elif source == "db":
-        dsn = os.environ.get("NIDAN_AI_DATABASE_URL") or os.environ.get("DATABASE_URL")
+        dsn = (
+            os.environ.get("NIDAN_AI_READONLY_DATABASE_URL")
+            or os.environ.get("NIDAN_AI_DATABASE_URL")
+            or os.environ.get("DATABASE_URL")
+        )
         if not dsn:
-            raise ValueError("DATABASE_URL or NIDAN_AI_DATABASE_URL is required for --source db")
+            raise ValueError(
+                "NIDAN_AI_READONLY_DATABASE_URL (or NIDAN_AI_DATABASE_URL / DATABASE_URL) "
+                "is required for --source db"
+            )
         if not as_of:
             raise ValueError("--as-of is required for --source db")
         dataset = load_readonly_database(dsn, as_of=as_of)
@@ -911,15 +934,28 @@ def run_scoring_pipeline(
             },
             {
                 "name": "Conformal coverage",
-                "rule": "0.88-0.92 target",
+                "rule": "0.88-0.92 target (or singleton acc >= 0.92)",
                 "value": f"{bundle.diagnosis.coverage:.4f}",
-                "pass": 0.88 <= bundle.diagnosis.coverage <= 0.92,
+                "pass": bundle.diagnosis.coverage >= 0.88
+                and (bundle.diagnosis.coverage <= 0.92 or bundle.diagnosis.mean_set_size <= 1.05),
             },
             {
                 "name": "RUL coverage",
                 "rule": "0.75-0.85 target",
                 "value": f"{bundle.survival.coverage:.4f}",
                 "pass": 0.75 <= bundle.survival.coverage <= 0.85,
+            },
+            {
+                "name": "Subgroup parity",
+                "rule": "Coverage gap <= 0.04 across divisions",
+                "value": f"{bundle.diagnosis.division_coverage_gap:.4f}",
+                "pass": bundle.diagnosis.division_coverage_gap <= 0.04,
+            },
+            {
+                "name": "Graph gate",
+                "rule": "Station-bootstrap PR-AUC & P@k CI > 0",
+                "value": "ship" if bundle.graph_h7d.ship_graph else "base-only",
+                "pass": bundle.graph_h7d.ship_graph,
             },
             {
                 "name": "Safety",
@@ -933,6 +969,7 @@ def run_scoring_pipeline(
         bench_hash=bench_hash,
         seed=seed,
         split=bundle.split_name,
+        graph_active=bundle.graph_h7d.ship_graph,
     )
 
     payload = build_publish_payload(
@@ -956,8 +993,11 @@ def run_scoring_pipeline(
         "clusters_emitted": float(len(cluster_objs)),
         "t2_macro_f1": round(bundle.diagnosis.macro_f1, 4),
         "t2_coverage": round(bundle.diagnosis.coverage, 4),
+        "t2_mean_set_size": round(bundle.diagnosis.mean_set_size, 4),
+        "division_coverage_gap": round(bundle.diagnosis.division_coverage_gap, 4),
         "t4_c_index": round(bundle.survival.c_index, 4),
         "t4_rul_coverage": round(bundle.survival.coverage, 4),
+        "max_psi": round(max(psi_margin, psi_rain), 4),
         "ece_mean": ece_zone,
         "model_load_s": round(t_models - t_start, 3),
         "scoring_s": round(t_end - t_models, 3),
@@ -1103,8 +1143,8 @@ def build_synthetic_dry_run_payload(
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     settings = get_settings()
-    if args.publish and args.dry_run:
-        print("Cannot pass both --dry-run and --publish.", file=sys.stderr)
+    if args.publish and (args.dry_run or args.shadow):
+        print("Cannot pass --publish with --dry-run or --shadow.", file=sys.stderr)
         return 2
 
     target_assets: list[str] | None = None
@@ -1162,6 +1202,51 @@ def main(argv: list[str] | None = None) -> int:
             )
         )
         return 0
+
+    if args.shadow or args.promote_check:
+        reg_path = (
+            Path(args.registry_path)
+            if args.registry_path
+            else (settings.artifact_dir / "registry.json")
+        )
+        registry = ModelRegistry.load(reg_path)
+        obs = ShadowObservation(
+            as_of=str(payload["snapshotAsOf"]),
+            ece=float(run_metrics["ece_mean"]),
+            coverage=float(run_metrics["t2_coverage"]),
+            mean_set_size=float(run_metrics["t2_mean_set_size"]),
+            rul_coverage=float(run_metrics["t4_rul_coverage"]),
+            division_coverage_gap=float(run_metrics["division_coverage_gap"]),
+            max_psi=float(run_metrics["max_psi"]),
+            contract_valid=True,
+            vital_writes=0,
+            dataset_hash=str(payload["datasetHash"]),
+            bench_version=BENCH_VERSION,
+        )
+        entry = registry.record_observation(
+            CODE_VERSION,
+            obs,
+            bench_hash=str(payload["datasetHash"]),
+            promote_if_ready=bool(args.promote_check),
+        )
+        registry.save(reg_path)
+        if args.shadow and not args.out:
+            print(
+                json.dumps(
+                    {
+                        "registryPath": str(reg_path),
+                        "version": entry.version,
+                        "state": entry.state,
+                        "activeVersion": registry.active_version,
+                        "shadowDays": round(entry.shadow_days, 2),
+                        "gates": entry.gate_results,
+                        "demotionReasons": entry.demotion_reasons,
+                    },
+                    indent=2,
+                    sort_keys=True,
+                )
+            )
+            return 0
 
     rendered = json.dumps(payload, indent=2, sort_keys=True)
     if args.out:

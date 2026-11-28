@@ -214,8 +214,10 @@ class GraphRiskModel:
         *,
         horizon: str = "h7d",
         seed: int = 42,
+        backend: str = "linear",
     ) -> GraphRiskModel:
         from sklearn.linear_model import LogisticRegression
+        from sklearn.neural_network import MLPClassifier
 
         if not samples:
             raise ValueError("Risk corpus is empty")
@@ -230,9 +232,16 @@ class GraphRiskModel:
         )
         base_logit = _logit(base_model.predict_proba(z)[:, 1])
         graph_x = _graph_features(samples, graphs, base_logit)
-        graph_model = LogisticRegression(
-            C=0.8, max_iter=400, solver="lbfgs", random_state=seed
-        ).fit(graph_x, y)
+        if backend == "mlp":
+            graph_model: Any = MLPClassifier(
+                hidden_layer_sizes=(16,), max_iter=300, alpha=0.05, random_state=seed
+            ).fit(graph_x, y)
+        elif backend == "linear":
+            graph_model = LogisticRegression(
+                C=0.8, max_iter=400, solver="lbfgs", random_state=seed
+            ).fit(graph_x, y)
+        else:
+            raise ValueError(f"Unsupported graph backend '{backend}'")
         return cls(
             base_model=base_model,
             graph_model=graph_model,
@@ -248,6 +257,7 @@ class GraphRiskModel:
                     "neigh_logit_weather",
                     "neigh_logit_shared",
                     "neigh_logit_route",
+                    "neigh_logit_work",
                     "neigh_margin_shared",
                     "neigh_slope_shared",
                     "neigh_harmonic_shared",
@@ -278,6 +288,7 @@ class GraphRiskModel:
                 float(np.mean(nl.get("weather_cell") or [own])),
                 float(np.mean(nl.get("shared_asset") or [own])),
                 float(np.mean(nl.get("route_dependency") or [own])),
+                float(np.mean(nl.get("work_history") or [own])),
                 float(np.mean(nl.get("shared_asset_margin") or [vector.get("margin_ratio")])),
                 float(np.mean(nl.get("shared_asset_slope") or [vector.get("margin_slope_7d")])),
                 float(np.mean(nl.get("shared_asset_harmonic") or [vector.get("harmonic_mv_24h")])),
@@ -347,6 +358,7 @@ def _graph_features(
                 mean_for("weather_cell"),
                 mean_for("shared_asset"),
                 mean_for("route_dependency"),
+                mean_for("work_history"),
                 mean_for("shared_asset", "margin_ratio"),
                 mean_for("shared_asset", "margin_slope_7d"),
                 mean_for("shared_asset", "harmonic_mv_24h"),
@@ -421,6 +433,7 @@ def evaluate_graph_gate(
     seed: int = 42,
     bootstrap: int = 800,
     top_k: int = 10,
+    backend: str = "linear",
 ) -> tuple[GraphRiskModel, dict[str, float], dict[str, tuple[float, float]]]:
     """Leave-one-station-out evaluation with baselines and station-level bootstrap CIs."""
     stations = sorted({sample.station for sample in corpus.samples})
@@ -434,7 +447,9 @@ def evaluate_graph_gate(
         test = [sample for sample in corpus.samples if sample.station == station]
         if not train or not test:
             continue
-        model = GraphRiskModel.fit(train, corpus.graphs, horizon=horizon, seed=seed)
+        model = GraphRiskModel.fit(
+            train, corpus.graphs, horizon=horizon, seed=seed, backend=backend
+        )
         y = np.array([sample.labels[horizon] for sample in test], dtype=int)
         base_probs = np.array([model.own_probability(sample.vector) for sample in test])
         hawkes_probs = hawkes_baseline_scores(test, model)
@@ -454,6 +469,7 @@ def evaluate_graph_gate(
                 "weather_cell": [],
                 "shared_asset": [],
                 "route_dependency": [],
+                "work_history": [],
                 "shared_asset_margin": [],
                 "shared_asset_slope": [],
                 "shared_asset_harmonic": [],
@@ -504,7 +520,9 @@ def evaluate_graph_gate(
         }
 
     # Refit on all data for the shipped model.
-    model = GraphRiskModel.fit(corpus.samples, corpus.graphs, horizon=horizon, seed=seed)
+    model = GraphRiskModel.fit(
+        corpus.samples, corpus.graphs, horizon=horizon, seed=seed, backend=backend
+    )
     rng = np.random.default_rng(seed)
     ap_diffs = np.array(differences_ap)
     pk_diffs = np.array(differences_pk)

@@ -131,36 +131,19 @@ def from_bench(stream: BenchStream, *, as_of: datetime | None = None) -> Canonic
     )
 
 
-def load_telemetry_export(
-    path: str | Path,
+def _build_dataset_from_rows(
+    rows: list[dict[str, Any]],
     *,
+    source: str,
     as_of: datetime | str | None = None,
-    events_path: str | Path | None = None,
+    events: list[dict[str, Any]] | None = None,
 ) -> CanonicalDataset:
-    """Load a read-only JSON/JSONL export of canonical telemetry samples.
-
-    Expected rows: ``{"assetId", "signalKey", "observedAt", "value", "quality"}``.
-    The export is never modified; the loader only reads it.
-    """
-    source = Path(path)
-    if not source.exists():
-        raise FileNotFoundError(f"Telemetry export not found: {source}")
-    rows: list[dict[str, Any]] = []
-    if source.suffix.lower() == ".jsonl":
-        with source.open("r", encoding="utf-8") as handle:
-            rows = [json.loads(line) for line in handle if line.strip()]
-    else:
-        payload = json.loads(source.read_text(encoding="utf-8"))
-        if isinstance(payload, dict) and "samples" in payload:
-            rows = list(payload["samples"])
-        elif isinstance(payload, list):
-            rows = payload
-        else:
-            raise ValueError("Telemetry export must be a list or an object with 'samples'")
-
     grouped: dict[tuple[str, str], list[tuple[datetime, float, int | None]]] = {}
     for row in rows:
-        observed_at = parse_utc(row["observedAt"])
+        raw_obs = row["observedAt"]
+        observed_at = raw_obs if isinstance(raw_obs, datetime) else parse_utc(raw_obs)
+        if observed_at.tzinfo is None:
+            observed_at = parse_utc(observed_at)
         key = (str(row["assetId"]), str(row["signalKey"]))
         quality = row.get("quality")
         grouped.setdefault(key, []).append(
@@ -193,6 +176,40 @@ def load_telemetry_export(
         )
         assets.setdefault(asset_id, AssetTelemetry(asset_id=asset_id, series={}))
         assets[asset_id].series[signal_key] = series
+    return CanonicalDataset(
+        assets=assets,
+        events=list(events or []),
+        source=source,
+        as_of=resolved_as_of,
+    )
+
+
+def load_telemetry_export(
+    path: str | Path,
+    *,
+    as_of: datetime | str | None = None,
+    events_path: str | Path | None = None,
+) -> CanonicalDataset:
+    """Load a read-only JSON/JSONL export of canonical telemetry samples.
+
+    Expected rows: ``{"assetId", "signalKey", "observedAt", "value", "quality"}``.
+    The export is never modified; the loader only reads it.
+    """
+    source = Path(path)
+    if not source.exists():
+        raise FileNotFoundError(f"Telemetry export not found: {source}")
+    rows: list[dict[str, Any]] = []
+    if source.suffix.lower() == ".jsonl":
+        with source.open("r", encoding="utf-8") as handle:
+            rows = [json.loads(line) for line in handle if line.strip()]
+    else:
+        payload = json.loads(source.read_text(encoding="utf-8"))
+        if isinstance(payload, dict) and "samples" in payload:
+            rows = list(payload["samples"])
+        elif isinstance(payload, list):
+            rows = payload
+        else:
+            raise ValueError("Telemetry export must be a list or an object with 'samples'")
 
     events: list[dict[str, Any]] = []
     if events_path is not None:
@@ -200,15 +217,12 @@ def load_telemetry_export(
         if event_file.exists():
             raw = json.loads(event_file.read_text(encoding="utf-8"))
             events = raw if isinstance(raw, list) else list(raw.get("events", []))
-    return CanonicalDataset(
-        assets=assets,
-        events=events,
-        source=f"export:{source.name}",
-        as_of=resolved_as_of,
+    return _build_dataset_from_rows(
+        rows, source=f"export:{source.name}", as_of=as_of, events=events
     )
 
 
-def load_readonly_database(dsn: str, *, as_of: datetime | str) -> CanonicalDataset:
+def load_readonly_database(dsn: str, *, as_of: datetime | str | None = None) -> CanonicalDataset:
     """Load telemetry from PostgreSQL in a read-only transaction.
 
     ``psycopg`` is supplied by the backend installation. This function issues only SELECTs;
@@ -219,7 +233,7 @@ def load_readonly_database(dsn: str, *, as_of: datetime | str) -> CanonicalDatas
     except ImportError as exc:  # pragma: no cover - optional path
         raise RuntimeError("psycopg is required for --source db; install nidan-backend") from exc
 
-    resolved_as_of = parse_utc(as_of)
+    resolved_as_of = parse_utc(as_of) if as_of is not None else datetime.now(UTC)
     query = """
         select asset_id, signal_key, observed_at, value, quality
         from telemetry_reading
@@ -241,28 +255,7 @@ def load_readonly_database(dsn: str, *, as_of: datetime | str) -> CanonicalDatas
                         "quality": quality,
                     }
                 )
-    grouped: dict[tuple[str, str], list[tuple[datetime, float, int | None]]] = {}
-    for row in rows:
-        grouped.setdefault((row["assetId"], row["signalKey"]), []).append(
-            (parse_utc(row["observedAt"]), float(row["value"]), row["quality"])
-        )
-    assets: dict[str, AssetTelemetry] = {}
-    for (asset_id, signal_key), items in grouped.items():
-        items.sort(key=lambda item: item[0])
-        assets.setdefault(asset_id, AssetTelemetry(asset_id=asset_id, series={}))
-        assets[asset_id].series[signal_key] = TelemetrySeries(
-            asset_id=asset_id,
-            signal_key=signal_key,
-            observed_at=[item[0] for item in items],
-            values=np.array([item[1] for item in items], dtype=float),
-            quality=np.array([item[2] for item in items], dtype=int),
-        )
-    return CanonicalDataset(
-        assets=assets,
-        events=[],
-        source="postgres-read-only",
-        as_of=resolved_as_of,
-    )
+    return _build_dataset_from_rows(rows, source="postgres-read-only", as_of=resolved_as_of)
 
 
 def iter_samples(dataset: CanonicalDataset) -> Iterable[dict[str, Any]]:

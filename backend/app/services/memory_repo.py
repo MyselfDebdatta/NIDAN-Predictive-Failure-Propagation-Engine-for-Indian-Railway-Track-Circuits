@@ -534,6 +534,23 @@ class MemoryRepository:
                     existing_alert["clusterId"] = ra["clusterId"]
                     if ra["clusterId"] not in clusters_updated:
                         clusters_updated.append(ra["clusterId"])
+                if ra.get("explanation"):
+                    existing_alert["explanation"] = copy.deepcopy(ra["explanation"])
+                if ra.get("ranking"):
+                    existing_alert["ranking"] = copy.deepcopy(ra["ranking"])
+                if ra.get("modelVersions"):
+                    existing_alert["modelVersions"] = copy.deepcopy(ra["modelVersions"])
+                if ra.get("blockWindowId"):
+                    win = next(
+                        (w for w in self._windows if w.get("id") == ra["blockWindowId"]),
+                        None,
+                    )
+                    if win is not None:
+                        existing_alert["block"] = {
+                            "window": copy.deepcopy(win),
+                            "fit": ra.get("blockFit") or "fits",
+                            "minutes": int(ra.get("blockMinutes") or win.get("durationMin", 0)),
+                        }
             updated_asset_ids.append(asset_id)
 
         if payload.get("modelHealth"):

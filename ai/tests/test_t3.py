@@ -88,3 +88,9 @@ def test_graph_gate_computes_baselines_and_enforces_honest_ship_rule() -> None:
         assert model.ship_graph is False
         assert model.negative_result is not None
         assert model.predict_honest(sample.vector) == model.own_probability(sample.vector)
+
+    mlp_model, mlp_metrics, _ = evaluate_graph_gate(
+        corpus, horizon="h7d", seed=42, bootstrap=200, top_k=10, backend="mlp"
+    )
+    assert 0.0 <= mlp_metrics["pr_auc_graph"] <= 1.0
+    assert 0.0 <= mlp_model.predict_honest(sample.vector) <= 1.0

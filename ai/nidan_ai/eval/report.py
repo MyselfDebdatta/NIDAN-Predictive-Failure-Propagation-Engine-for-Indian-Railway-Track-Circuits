@@ -159,6 +159,7 @@ def build_model_health(
     bench_hash: str,
     seed: int,
     split: str,
+    graph_active: bool = False,
 ) -> dict[str, Any]:
     """Build a payload matching the backend ``ModelHealth`` model."""
     signature = stable_id(
@@ -187,7 +188,7 @@ def build_model_health(
             "trained": as_of,
             "window": window,
             "owner": "ML platform",
-            "state": "Active",
+            "state": "Active" if graph_active else "Shadow",
         },
         {
             "name": "Survival / RUL",
@@ -221,7 +222,7 @@ def build_model_health(
         "eceBins": 10,
         "coverage": float(coverage),
         "heldOutN": int(held_out_n),
-        "activeModels": len(models),
+        "activeModels": int(sum(1 for m in models if m["state"] == "Active")),
         "driftAmber": int(sum(1 for item in drift if item["state"] != "nominal")),
         "models": models,
         "reliability": reliability,

@@ -174,8 +174,81 @@ def test_end_to_end_pipeline_publishes_and_replays_idempotently_against_backend(
             assert health_resp.json()["signature"] == payload["modelHealth"]["signature"]
             alerts_after = reader.get("/v1/alerts").json()
             assert len(alerts_after) >= len(payload["assessments"])
+            by_asset = {a["assetId"]: a for a in alerts_after}
+            published_by_asset = {a["assetId"]: a for a in payload["assessments"]}
+            for aid, sent in published_by_asset.items():
+                assert (
+                    by_asset[aid]["explanation"]["physics"]["headline"]
+                    == (sent["explanation"]["physics"]["headline"])
+                )
+                assert by_asset[aid]["ranking"]["calibratedRisk"] == pytest.approx(
+                    sent["ranking"]["calibratedRisk"]
+                )
     finally:
         transport.close()
+
+
+def test_load_readonly_database_and_source_db_worker_pipeline(monkeypatch, tmp_path) -> None:
+    import sys
+    import types
+
+    stream = generate("monsoon-60d", seed=42, days=15)
+    samples = as_telemetry_samples(stream)
+    db_rows = [
+        (s["assetId"], s["signalKey"], s["observedAt"], s["value"], s["quality"]) for s in samples
+    ]
+    executed_sql: list[str] = []
+
+    class _FakeCursor:
+        def __enter__(self) -> _FakeCursor:
+            return self
+
+        def __exit__(self, *_args: object) -> None:
+            return None
+
+        def execute(self, sql: str, _params: object = None) -> None:
+            executed_sql.append(sql.strip().lower())
+
+        def fetchall(self) -> list[tuple[object, ...]]:
+            return db_rows
+
+    class _FakeConn:
+        def __enter__(self) -> _FakeConn:
+            return self
+
+        def __exit__(self, *_args: object) -> None:
+            return None
+
+        def cursor(self) -> _FakeCursor:
+            return _FakeCursor()
+
+    from nidan_ai.config import get_settings
+
+    fake_psycopg = types.ModuleType("psycopg")
+    fake_psycopg.connect = lambda _dsn, autocommit=False: _FakeConn()  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "psycopg", fake_psycopg)
+    monkeypatch.setenv("NIDAN_AI_READONLY_DATABASE_URL", "postgresql://readonly@db/nidan")
+    get_settings.cache_clear()
+
+    out_file = tmp_path / "db_out.json"
+    try:
+        rc = main(
+            [
+                "--source",
+                "db",
+                "--as-of",
+                stream.timestamps[-1].isoformat(),
+                "--out",
+                str(out_file),
+            ]
+        )
+    finally:
+        get_settings.cache_clear()
+    assert rc == 0
+    assert executed_sql[0] == "set transaction read only"
+    assert executed_sql[1].startswith("select asset_id, signal_key")
+    parsed = json.loads(out_file.read_text(encoding="utf-8"))
+    assert len(parsed["assessments"]) == len(stream.assets)
 
 
 def test_worker_cli_rejects_conflicting_flags_and_writes_dry_run_reports(tmp_path) -> None:
