@@ -85,3 +85,24 @@ def test_t2_full_twelve_scenario_gate() -> None:
     assert bundle.coverage >= 0.88
     assert bundle.coverage <= 0.92 or bundle.mean_set_size <= 1.05
     assert bundle.mean_set_size <= 3.0
+
+
+def test_t2_supports_all_twelve_modes_when_enabled() -> None:
+    corpus = build_mode_corpus(
+        seeds=(42, 43, 99),
+        scenarios=(
+            "monsoon-60d",
+            "lightning-cluster",
+            "supply-sag",
+            "cable-ingress",
+            "rail-break-step",
+            "masked-decay",
+        ),
+        snapshots_per_asset=2,
+        all_modes=True,
+    )
+    bundle = train_diagnosis_model(corpus, seed=42, test_seed=99, alpha=0.10, all_modes=True)
+    assert len(bundle.classes) > 5
+    assert bundle.macro_f1 > bundle.baseline_macro_f1
+    assert bundle.coverage >= 0.80
+    assert 0.0 <= bundle.division_coverage_gap <= 1.0

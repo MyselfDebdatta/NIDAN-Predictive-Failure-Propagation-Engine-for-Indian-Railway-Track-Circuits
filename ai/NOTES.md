@@ -31,3 +31,32 @@ NIDAN addresses this explicitly (spec §7.3):
 2. **Design priors**: Initial states and process-noise covariances are anchored to design parameters (`length_km`, `rail_ohm_km`, `dry_ballast_ohm_km`, `feed_v`, `source_ohm`, `relay_ohm`) from asset master data.
 3. **Uncertainty propagation**: Posterior covariance $P$ (delta-method $\sigma(G_b) \approx G_b \sqrt{P_{00}}$) and single-snapshot inversion sensitivity (`invert_ballast_with_uncertainty`) are emitted into feature vectors and assessment narratives.
 4. **Honest language**: Explanations always state *"effective ballast conductance"* and include a falsifier specifying a field measurement (e.g., 0.5 Ω shunt test or drop-away timing check) that would disprove the hypothesis. Full separation requires a second mid-line voltage tap or AC/AF phase-of-impedance telemetry.
+
+---
+
+## 3. Assurance Follow-up (A13 / A15)
+
+- **Shadow registry** (`eval/shadow.py`): a version-pointer registry records one observation per
+  run with its `as_of`, ECE, conformal coverage, mean set size, RUL coverage, division coverage
+  gap, PSI, contract validity and vital-write count. Observations are deduplicated by timestamp
+  and retained for 30 snapshots; `first_seen_at`/`last_seen_at` drive the >= 28-day window.
+- **Seven promotion gates**: calibration (ECE <= 0.05), coverage (conformal 0.88-0.92, or
+  singleton accuracy >= 0.92), subgroup parity (max-min division coverage gap <= 0.04), drift
+  (PSI <= 0.20), shadow period, zero vital writes, and full Pydantic contract validity. All
+  must pass before `--promote-check` flips a candidate from `shadow` to `active`; a subsequent
+  failure demotes it and restores `previous_active_version`.
+- **Conservative coverage rule**: when the conformal predictor is so accurate that its set is
+  effectively always a singleton, empirical coverage can exceed the 0.92 target band. The
+  worker accepts coverage >= 0.88 only when `mean_set_size <= 1.05`, and reports the measured
+  value plus set size rather than widening sets or claiming a target it did not measure.
+- **Graph honesty**: `build_model_health` marks the propagation graph `Shadow` unless its
+  station-bootstrap PR-AUC and P@k confidence intervals both exclude zero; `activeModels`
+  counts only truly active models. `GraphRiskModel.fit` additionally supports a deterministic
+  MLP backend and `work_history` neighbours for ablation experiments, but the shipped default
+  remains the linear CPU model.
+- **Memory-repo parity**: `backend/app/services/memory_repo.py` now propagates `explanation`,
+  `ranking`, `modelVersions` and block info from a new `risk_assessment` onto the existing
+  in-memory alert, so fixture-mode read-back matches the PostgreSQL publish path. This adds no
+  endpoint and no hardware write path.
+- **Read-only DB source**: `--source db` accepts `NIDAN_AI_READONLY_DATABASE_URL`,
+  `NIDAN_AI_DATABASE_URL` or `DATABASE_URL` and issues `set transaction read only` plus SELECTs.

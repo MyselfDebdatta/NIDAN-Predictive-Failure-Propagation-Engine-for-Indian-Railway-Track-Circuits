@@ -14,7 +14,7 @@ import numpy as np
 
 from nidan_ai.bench.generator import generate
 from nidan_ai.bench.scenarios import SCENARIO_NAMES
-from nidan_ai.config import RELEASE_MODES
+from nidan_ai.config import FAILURE_MODES, RELEASE_MODES
 from nidan_ai.data.canonical import from_bench
 from nidan_ai.data.features import (
     FEATURE_LABELS,
@@ -24,17 +24,18 @@ from nidan_ai.data.features import (
     context_from_asset,
     feature_matrix,
 )
+from nidan_ai.eval.metrics import division_coverage_gap
 from nidan_ai.models.conformal import MondrianConformal
 
 _RELEASE_MAP: dict[str, str] = {mode: mode for mode in RELEASE_MODES}
 _FALLBACK_MODE = "F12"
 
 
-def release_label(mode: str | None) -> str:
-    """Map any bench mode to the first-release diagnosis scope."""
+def release_label(mode: str | None, *, allowed_modes: tuple[str, ...] = RELEASE_MODES) -> str:
+    """Map any bench mode to the configured diagnosis scope."""
     if mode is None:
         return _FALLBACK_MODE
-    return _RELEASE_MAP.get(mode, _FALLBACK_MODE)
+    return mode if mode in allowed_modes else _FALLBACK_MODE
 
 
 @dataclass(slots=True)
@@ -75,8 +76,10 @@ def build_mode_corpus(
     seeds: tuple[int, ...] = (42, 43),
     scenarios: tuple[str, ...] = SCENARIO_NAMES,
     snapshots_per_asset: int = 3,
+    all_modes: bool = False,
 ) -> ModeCorpus:
     """Generate a labelled synthetic corpus for T2 pre-training."""
+    allowed = FAILURE_MODES if all_modes else RELEASE_MODES
     corpus = ModeCorpus()
     for scenario_name in scenarios:
         for seed in seeds:
@@ -88,7 +91,7 @@ def build_mode_corpus(
                     days = _snapshot_days(
                         asset.event_mode, asset.event_day, stream.scenario_def.days
                     )
-                    label = release_label(asset.event_mode)
+                    label = release_label(asset.event_mode, allowed_modes=allowed)
                 else:
                     days = [max(2, min(stream.scenario_def.days - 1, 12 + seed % 5))]
                     label = _FALLBACK_MODE
@@ -179,6 +182,8 @@ class DiagnosisBundle:
     mean_set_size: float
     held_out_n: int
     classes: list[str] = field(default_factory=list)
+    division_coverage_gap: float = 0.0
+    division_coverages: dict[str, float] = field(default_factory=dict)
 
 
 def _stratified_indices(labels: np.ndarray, seed: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -238,6 +243,7 @@ def train_diagnosis_model(
     seed: int = 42,
     test_seed: int = 99,
     alpha: float = 0.09,
+    all_modes: bool = False,
 ) -> DiagnosisBundle:
     """Fit the classifier and conformal calibrator, then measure held-out metrics.
 
@@ -245,7 +251,7 @@ def train_diagnosis_model(
     calibration). If that hold-out is too small, a stratified split is used and its name is
     recorded so the metric is never ambiguous.
     """
-    corpus = corpus or build_mode_corpus(seeds=(42, 43, test_seed))
+    corpus = corpus or build_mode_corpus(seeds=(42, 43, test_seed), all_modes=all_modes)
     x, y, groups, _stations = corpus.arrays()
     if x.shape[0] < 20:
         raise ValueError("Diagnosis corpus is too small")
@@ -301,20 +307,29 @@ def train_diagnosis_model(
     baseline_predictions = np.array([majority] * len(test_labels))
     baseline_macro_f1 = _macro_f1(test_labels, baseline_predictions, evaluation_classes)
 
+    pred_sets: list[list[str]] = []
     set_sizes = []
     hits = 0
     for row, label, group in zip(test_probabilities, test_labels, groups[test_idx], strict=True):
         mode_set = conformal.predict_set(row, str(group))
+        pred_sets.append(mode_set)
         set_sizes.append(len(mode_set))
         hits += int(str(label) in mode_set)
     coverage = float(hits / max(1, len(test_labels)))
     mean_set_size = float(np.mean(set_sizes)) if set_sizes else 0.0
+    parity_gap, div_covs = division_coverage_gap(
+        pred_sets,
+        [str(lbl) for lbl in test_labels.tolist()],
+        [str(grp) for grp in groups[test_idx].tolist()],
+        min_support=5,
+    )
 
     metrics = {
         "macro_f1": float(macro_f1),
         "baseline_macro_f1": float(baseline_macro_f1),
         "coverage": coverage,
         "mean_set_size": mean_set_size,
+        "division_coverage_gap": float(parity_gap),
         "held_out_n": int(len(test_labels)),
         "classes": float(len(classes)),
         "split": split_name,
@@ -330,6 +345,8 @@ def train_diagnosis_model(
         mean_set_size=mean_set_size,
         held_out_n=int(len(test_labels)),
         classes=classes,
+        division_coverage_gap=float(parity_gap),
+        division_coverages=div_covs,
     )
 
 

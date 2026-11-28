@@ -10,6 +10,8 @@ from nidan_ai.eval.metrics import (
     bootstrap_ci,
     brier_score,
     c_index,
+    division_coverage_gap,
+    division_interval_coverage_gap,
     expected_calibration_error,
     interval_coverage,
     macro_f1,
@@ -59,3 +61,16 @@ def test_hand_computed_coverage_psi_c_index_and_macro_f1() -> None:
 
     lo, hi = bootstrap_ci(np.array([1.0, 2.0, 3.0, 4.0]), n_bootstrap=200, seed=42)
     assert 1.0 <= lo <= hi <= 4.0
+
+    sets_div = [["F1"]] * 6 + [["F3"]] * 6
+    labels_div = ["F1"] * 5 + ["F3"] + ["F3"] * 6
+    divs = ["ADRA"] * 6 + ["BKSC"] * 6
+    gap, by_div = division_coverage_gap(sets_div, labels_div, divs, min_support=5)
+    assert by_div == pytest.approx({"ADRA": 5.0 / 6.0, "BKSC": 1.0})
+    assert gap == pytest.approx(1.0 / 6.0)
+
+    igap, iby = division_interval_coverage_gap(
+        np.zeros(10), np.ones(10), np.array([0.5] * 9 + [2.0]), ["ADRA"] * 5 + ["BKSC"] * 5
+    )
+    assert iby == pytest.approx({"ADRA": 1.0, "BKSC": 0.8})
+    assert igap == pytest.approx(0.2)
